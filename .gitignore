@@ -1,0 +1,4 @@
+/.venv
+/snomed_data
+/testing_embeddings.ipynb
+/__pycache__
