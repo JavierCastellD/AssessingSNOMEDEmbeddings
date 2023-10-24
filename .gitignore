@@ -3,3 +3,6 @@
 /testing_embeddings.ipynb
 /__pycache__
 SNOMEDEmbeddingsTest.code-workspace
+dev_concepts.txt
+test_concepts.txt
+train_concepts.txt

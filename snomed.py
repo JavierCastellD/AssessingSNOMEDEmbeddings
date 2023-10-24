@@ -309,7 +309,7 @@ class Snomed:
                 List that contains which relationships from SNOMED CT we are interested in.        
         
         Returns:
-            A list containing tuples [relationship_ID, sct_ID] for each related concept. If there are no related concepts,
+            A list containing tuples (relationship_ID, sct_ID) for each related concept. If there are no related concepts,
             an empty list is returned instead.
         """
         related_concepts = []
@@ -369,3 +369,23 @@ class Snomed:
             concepts_list += list(self.metadata.keys())
 
         return concepts_list
+    
+    def is_leaf_concept(self, sct_id : int):
+        """Method that returns if a concept in SNOMED CT is a leaf concept or not. A leaf concept
+        is one which has no child with an Is-a relationship (116680003).
+        
+        Parameters:
+            sct_id (int):
+                ID of a SNOMED CT concept.
+        
+        Returns:
+            True if the concept is a leaf concept. Otherwise, False is returned.
+        """
+        if sct_id in self.concepts:
+            return len(self.concepts[sct_id]['relationsAux']) == 0
+        
+        if sct_id in self.metadata:
+            return len(self.metadata[sct_id]['relationsAux']) == 0
+        
+        warnings.warn("Concept", sct_id, "was not found in this version of SNOMED CT.")
+        return False
