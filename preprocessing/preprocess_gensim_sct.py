@@ -70,13 +70,15 @@ class PreprocessGensimSCT(PreprocessEM):
             with open(corpus, encoding='utf8') as corpus_file:
                 sentences_corpus += corpus_file.readlines()
 
+        tokens = []
+
         for sentence in sentences_corpus:
             s = self.preprocess_sentence(sentence)
 
             # Tokenize the sentence into words
             s = nltk.word_tokenize(s, language=self.language)
 
-            sentences_corpus.append(s)
+            tokens.append(s)
 
         return sentences_corpus
 
