@@ -1,4 +1,4 @@
-from preprocess_em import PreprocessEM
+from preprocessing.preprocess_em import PreprocessEM
 from re import Match
 import nltk
 import re
