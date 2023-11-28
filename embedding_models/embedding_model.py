@@ -20,7 +20,7 @@ class EmbeddingModel(ABC):
         '''
         if model_path is not None:
             self.model = self.load_model(model_path)
-        elif corpora is not None:
+        elif corpora is not None: 
             self.model = self.train_model(corpora)
 
     @abstractmethod

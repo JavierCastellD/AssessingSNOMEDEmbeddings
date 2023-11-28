@@ -6,3 +6,6 @@ SNOMEDEmbeddingsTest.code-workspace
 dev_concepts.txt
 test_concepts.txt
 train_concepts.txt
+/mimic_notes
+corpus_*
+train_ft.py

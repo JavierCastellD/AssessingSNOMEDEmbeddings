@@ -34,25 +34,25 @@ snomed = Snomed(concept_path, relationship_path, description_path)
 TRAIN_PROPORTION = 0.8
 TEST_PROPORTION = 0.1
 
-non_leaf_concepts = []
+multiple_rel_concepts = []
 
 # Obtain those concepts for which we have at least one relationship that is not IS_A_ID
 for concept_id in snomed.get_sct_concepts(metadata=False):
     relations = [rel_id for rel_id, _ in snomed.get_related_concepts(concept_id)]
     
-    if IS_A_ID:
-        non_leaf_concepts.append(concept_id)
+    if list_contains_other_id(relations, IS_A_ID):
+        multiple_rel_concepts.append(concept_id)
 
-n_train = round(len(non_leaf_concepts) * TRAIN_PROPORTION)
-n_test = round(len(non_leaf_concepts) * TEST_PROPORTION)
+n_train = round(len(multiple_rel_concepts) * TRAIN_PROPORTION)
+n_test = round(len(multiple_rel_concepts) * TEST_PROPORTION)
 
 # Shuffle the concepts
-random.shuffle(non_leaf_concepts)
+random.shuffle(multiple_rel_concepts)
 
 # Obtain the train, dev, and test list of sct_ids
-train_ids = non_leaf_concepts[:n_train]
-dev_ids = non_leaf_concepts[n_train:-n_test]
-test_ids = non_leaf_concepts[-n_test:]
+train_ids = multiple_rel_concepts[:n_train]
+dev_ids = multiple_rel_concepts[n_train:-n_test]
+test_ids = multiple_rel_concepts[-n_test:]
 
 with open('train_concepts.txt', 'w') as f:
     for line in train_ids:

@@ -1,67 +1,12 @@
-import re
 import nltk
 import warnings
 import numpy as np
 from embedding_model import EmbeddingModel
 from gensim.models.word2vec import Word2Vec
-
+from preprocessing.preprocess_em import PreprocessEM
+from preprocessing.preprocess_gensim_sct import PreprocessGensimSCT
 
 SEED = 1234
-
-def preprocess_sentence(sentence : str):
-    '''Method to preprocess a sentence. The sentence is lowered, special symbols are separated (such as : or -),
-    values between parenthesis are removed (this is because of SNOMED CT), and double spaces are deleted.
-    
-    Parameters:
-        sentence (str):
-            String that represents the sentence to be preprocessed.
-    
-    Returns:
-        A preprocessed string. 
-    '''
-    # Lower the text
-    s = sentence.lower()
-
-    # Separate certain symbols
-    symbols = ['(',')','.','[',']',':','-','/']
-    for symb in symbols:
-        s = s.replace(symb, ' ' + symb + ' ')
-
-    # Remove words between parenthesis
-    s = re.sub('\(.+\)', ' ', s)
-
-    # Remove double spaces
-    s = re.sub(' +', ' ', s)
-    s = s.strip()
-
-    return s
-
-def preprocess_text(list_sentences : list[str], language : str):
-    '''Method to preprocess a text. Each sentence is preprocessed using the preprocess_sentence method. 
-    Each sentence is tokenized into words after preprocessing, as expected for gensim's implementation
-    of Word2Vec.
-    
-    Parameters:
-        list_sentences (list):
-            List of sentences to be preprocessed.
-        
-        language (str):
-            Language of the corpus.
-
-    Returns:
-        A list of tokenized and preprocessed sentences.    
-    '''
-    sentences = []
-
-    for sentence in list_sentences:
-        s = preprocess_sentence(sentence)
-
-        # Tokenize the sentence into words
-        s = nltk.word_tokenize(s, language=language)
-
-        sentences.append(s)
-
-    return sentences
 
 class Word2VecEM(EmbeddingModel):
     '''Class that represents a Word2Vec embedding model. The Word2Vec model is described here: https://arxiv.org/abs/1301.3781.
@@ -73,8 +18,12 @@ class Word2VecEM(EmbeddingModel):
             Dimensions of the embeddings produced by the model. This is used when the model is trained.
         language (str):
             Language of the corpora from which to train the model.
+        preprocess_pipeline (PreprocessEM):
+            PreprocessEM object to preprocess the text used for training the model and creating the embedding.
+
     '''
-    def __init__(self, vector_size : int = 200, language : str = 'english', model_path: str = None, corpora: list[str] = None):
+    def __init__(self, vector_size : int = 200, language : str = 'english', model_path: str = None, corpora: list[str] = None,
+                 preprocess_pipeline : PreprocessEM = PreprocessGensimSCT):
         '''Method to load the Word2Vec model. If model_path is given as parameter, the model will be loaded. Otherwise, the model
         will be trained from the corpora parameter. The method expects to receive at least one of those parameters.
         
@@ -87,9 +36,12 @@ class Word2VecEM(EmbeddingModel):
                 Path to the model.
             corpora (list):
                 List of corpus from which to train the model.        
+            preprocess_pipeline (PreprocessEM):
+                PreprocessEM object to preprocess the text used for training the model and creating the embedding.      
         '''
         self.vector_size = vector_size
         self.language = language
+        self.preprocess_pipeline = preprocess_pipeline
         super().__init__(model_path, corpora)
 
     def train_model(self, corpora: list[str]):
@@ -103,12 +55,7 @@ class Word2VecEM(EmbeddingModel):
         Returns:
             A trained Word2Vec model.
         '''
-        sentences_corpus = []
-        for corpus in corpora:
-            with open(corpus, encoding='utf8') as corpus_file:
-                sentences_corpus += corpus_file.readlines()
-        
-        sentences = preprocess_text(sentences_corpus, self.language)
+        sentences = self.preprocess_pipeline.preprocess_text(corpora)
 
         ft_model = Word2Vec(sentences=sentences, sg=1, seed=SEED, vector_size=self.vector_size,
                             window=5, min_count=1)
@@ -145,7 +92,7 @@ class Word2VecEM(EmbeddingModel):
         Returns:
             An embedding.
         '''
-        name = preprocess_sentence(word)
+        name = self.preprocess_pipeline.preprocess_sentence(word)
         words_in_name = nltk.word_tokenize(name, language=self.language)
         vectors = []
 

@@ -1,5 +1,5 @@
 import pandas as pd
-from embedding_model import EmbeddingModel
+from embedding_models.embedding_model import EmbeddingModel
 from collections.abc import Iterable
 from sklearn.metrics.pairwise import cosine_similarity
 import warnings
@@ -35,8 +35,7 @@ class Snomed:
         embeddings (dict):
             A dictionary that maps each SCT-ID to an embedding. This can be None if there is no model.
     """
-    def __init__(self, con_path: str, rel_path: str, desc_path: str, def_path: str = None, model_path: str = None,
-                 model_class : EmbeddingModel = None):
+    def __init__(self, con_path: str, rel_path: str, desc_path: str, def_path: str = None, embedding_model : EmbeddingModel = None):
         """Loads SNOMED-CT from certain files.
 
         Parameters:
@@ -48,11 +47,8 @@ class Snomed:
                 Path to the descriptions file from a national or the international release.
             def_path (str):
                 Path to the definitions file from a national or the international release. This is optional.
-            model_path (str):
-                Path to the embedding model, from which to generate the embedding for each concept. This is optional.
-            model_class (EmbeddingModel):
-                If model_path is not None, the model_class should be defined. Model_class should be a subclass
-                of EmbeddingModel.
+            embedding_model (EmbeddingModel):
+                Represents an embedding model, and it should be a subclass of EmbeddingModel. This is optional.
         """
 
         concepts_pd = pd.read_csv(con_path, delimiter='\t')
@@ -129,8 +125,8 @@ class Snomed:
                 self.metadata[sourceID] = self.concepts.pop(sourceID)
         
         # Loading the embedding model and creating embeddings
-        if model_path is not None and model_class is not None:
-            self.model = model_class(model_path)
+        if embedding_model is not None:
+            self.model = embedding_model
             self.embeddings = dict()
 
             for conceptID, concept in self.concepts.items():
@@ -193,6 +189,34 @@ class Snomed:
         warnings.warn("Concept", sct_id, "was not found in this version of SNOMED CT.")
         return ''
     
+    def get_related_concepts(self, sct_id : int, filter_rels : list[int] = None):
+        """Method that returns which SNOMED CT concepts are related to the concept given as a parameter. Concepts
+        that are the object part of a relationship with the concept parameter are considered related concepts. If
+        filter_rels is set to a list of integers containing valid relationships, only concepts that are part
+        of those types of relationships will be returned.
+        
+        Parameters:
+            sct_id (int):
+                Integer that represents an ID of SNOMED CT.
+            filter_rels (list):
+                List that contains which relationships from SNOMED CT we are interested in.        
+        
+        Returns:
+            A list containing tuples (relationship_ID, sct_ID) for each related concept. If there are no related concepts,
+            an empty list is returned instead.
+        """
+        related_concepts = []
+        if sct_id in self.concepts:
+            related_concepts = [(rel_id, object_id) for object_id, rel_id in self.concepts[sct_id]['relations'] 
+                                                    if filter_rels is None or rel_id in filter_rels]
+        elif sct_id in self.metadata:
+            related_concepts = [(rel_id, object_id) for object_id, rel_id in self.metadata[sct_id]['relations'] 
+                                                    if filter_rels is None or rel_id in filter_rels]
+        else:
+            warnings.warn("Concept", sct_id, "was not found in this version of SNOMED CT.")
+
+        return related_concepts
+
     def get_top_level_concept(self, sct_id : int):
         """Method that returns to which of the 19 top level hierarchies the concept belongs to.
         
@@ -246,83 +270,6 @@ class Snomed:
             elements_from_top_list += self.get_top_concept_list(parent_id, top_list)
             
         return list(set(elements_from_top_list))
-
-    def is_child_of(self, sct_id_A : int, sct_id_B : int):
-        if sct_id_A in self.concepts:
-            parent_ids = [destID for destID, typeID in self.concepts[sct_id_A]['relations'] if typeID == IS_A_ID]
-        elif sct_id_A in self.metadata:
-            parent_ids = [destID for destID, typeID in self.metadata[sct_id_A]['relations'] if typeID == IS_A_ID]
-        else:
-            return False
-        
-        if sct_id_B in parent_ids:
-            return True
-        
-        for parent_id in parent_ids:
-            if self.is_child_of(parent_id, sct_id_B):
-                return True
-        
-        return False
-
-    def get_most_similar_concept(self, word : str, n : int = 1):
-        '''Method that returns the most similar concept to the string that receives as a parameter. This is
-        done by performing cosine similarity between embeddings.
-        
-        Paramters:
-            word (str):
-                String of text from which to obtain the most similar concept.
-            n (int):
-                Number of similar concepts to retrieve. The default value is 1.
-        Returns:
-            A tuple (SCT-ID, sim_value), where the first element is the ID of the SNOMED concept, and the second
-            is the similarity score. If n is greater than 1, it returns a list of tuples with the n most similar concepts instead.
-        '''
-        vector = self.model.get_embedding(word)
-
-        dictionary_embeddings = list(self.embeddings.values())
-        dictionary_conceptids = list(self.embeddings.keys())
-
-        # Obtain the similarities between this vector and the embeddings
-        similarities = cosine_similarity(X=vector.reshape(1, -1), Y=dictionary_embeddings)[0]
-
-        # We join together the concepts_ids with the similarities and order it to get the most
-        # similar concept
-        sim_list = list(zip(dictionary_conceptids, similarities))
-        sim_list.sort(key=lambda x : x[1], reverse=True)
-
-        # Return a tuple (conceptID, similarity)
-        if n <= 1:
-            return sim_list[0]
-        else:
-            return sim_list[:n]
-
-    def get_related_concepts(self, sct_id : int, filter_rels : list = None):
-        """Method that returns which SNOMED CT concepts are related to the concept given as a parameter. Concepts
-        that are the object part of a relationship with the concept parameter are considered related concepts. If
-        filter_rels is set to a list of integers containing valid relationships, only concepts that are part
-        of those types of relationships will be returned.
-        
-        Parameters:
-            sct_id (int):
-                Integer that represents an ID of SNOMED CT.
-            filter_rels (list):
-                List that contains which relationships from SNOMED CT we are interested in.        
-        
-        Returns:
-            A list containing tuples (relationship_ID, sct_ID) for each related concept. If there are no related concepts,
-            an empty list is returned instead.
-        """
-        related_concepts = []
-        if sct_id in self.concepts:
-            related_concepts = [(rel_id, object_id) for object_id, rel_id in self.concepts[sct_id]['relations'] 
-                                                    if filter_rels is None or rel_id in filter_rels]
-        elif sct_id in self.metadata:
-            related_concepts = [(rel_id, object_id) for object_id, rel_id in self.metadata[sct_id]['relations'] 
-                                                    if filter_rels is None or rel_id in filter_rels]
-        else:
-            warnings.warn("Concept", sct_id, "was not found in this version of SNOMED CT.")
-
-        return related_concepts
 
     def get_depth(self, sct_id : int):
         """Method that returns how deep a concept is in the is_a hierarchy, being the the root concept 
@@ -389,3 +336,58 @@ class Snomed:
         
         warnings.warn("Concept", sct_id, "was not found in this version of SNOMED CT.")
         return False
+
+    def is_child_of(self, sct_id_A : int, sct_id_B : int):
+        if sct_id_A in self.concepts:
+            parent_ids = [destID for destID, typeID in self.concepts[sct_id_A]['relations'] if typeID == IS_A_ID]
+        elif sct_id_A in self.metadata:
+            parent_ids = [destID for destID, typeID in self.metadata[sct_id_A]['relations'] if typeID == IS_A_ID]
+        else:
+            return False
+        
+        if sct_id_B in parent_ids:
+            return True
+        
+        for parent_id in parent_ids:
+            if self.is_child_of(parent_id, sct_id_B):
+                return True
+        
+        return False
+
+# Methods that need an embedding model to work
+    def get_most_similar_concept(self, word : str, n : int = 1):
+        '''Method that returns the most similar concept to the string that receives as a parameter. This is
+        done by performing cosine similarity between embeddings.
+        
+        Paramters:
+            word (str):
+                String of text from which to obtain the most similar concept.
+            n (int):
+                Number of similar concepts to retrieve. The default value is 1.
+        Returns:
+            A tuple (SCT-ID, sim_value), where the first element is the ID of the SNOMED concept, and the second
+            is the similarity score. If n is greater than 1, it returns a list of tuples with the n most similar 
+            concepts instead. If no embedding model was assigned, an empty list is returned.
+        '''
+        if self.model is None:
+            warnings.warn('No embedding model was assigned to Snomed.')
+            return []
+
+        vector = self.model.get_embedding(word)
+
+        dictionary_embeddings = list(self.embeddings.values())
+        dictionary_conceptids = list(self.embeddings.keys())
+
+        # Obtain the similarities between this vector and the embeddings
+        similarities = cosine_similarity(X=vector.reshape(1, -1), Y=dictionary_embeddings)[0]
+
+        # We join together the concepts_ids with the similarities and order it to get the most
+        # similar concept
+        sim_list = list(zip(dictionary_conceptids, similarities))
+        sim_list.sort(key=lambda x : x[1], reverse=True)
+
+        # Return a tuple (conceptID, similarity)
+        if n <= 1:
+            return sim_list[0]
+        else:
+            return sim_list[:n]
