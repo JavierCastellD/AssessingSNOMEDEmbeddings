@@ -9,3 +9,4 @@ train_concepts.txt
 /mimic_notes
 corpus_*
 train_ft.py
+/embedding_models/__pycache__
