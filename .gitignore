@@ -10,3 +10,5 @@ train_concepts.txt
 corpus_*
 train_ft.py
 /embedding_models/__pycache__
+pizza.ttl
+config.cfg
