@@ -22,20 +22,20 @@ def snomed_walks(snomed : Snomed, depth : int = 1, concepts : list = None):
     all_walks = set()
     if concepts is not None:
         for sct_id in concepts:
-            walks = sct_walk(snomed, sct_id, depth, concepts)
+            walks = sct_concept_walk(snomed, sct_id, depth, concepts)
 
             for walk in walks:
                 all_walks.add(walk)
     else:
         for sct_id in snomed.get_sct_concepts(metadata=False):
-            walks = sct_walk(snomed, sct_id, depth)
+            walks = sct_concept_walk(snomed, sct_id, depth)
 
             for walk in walks:
                 all_walks.add(walk)
 
     return list(all_walks)
 
-def sct_walk(snomed : Snomed, initial_concept : int, depth : int = 1, concepts : list = None):
+def sct_concept_walk(snomed : Snomed, initial_concept : int, depth : int = 1, concepts : list = None):
     """Method that returns each possible walk up to a given depth starting from the concept
     initial_concept. If concepts is not None, only those concepts will be considered for the walks.
     A walk is considered as a sequence of concepts_id alternated with relationship_ids. 
