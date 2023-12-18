@@ -338,6 +338,18 @@ class Snomed:
         return False
 
     def is_child_of(self, sct_id_A : int, sct_id_B : int):
+        """Method that returns if concept denoted by sct_id_A is a child of the concept denoted by sct_id_B. This relation does not have to be direct, as the
+        method only checks if sct_id_B is part of any of the concepts in the is_a hierarchy of sct_id_A created by going towards the root concept.
+        
+        Parameters:
+            sct_id_A (int):
+                ID of the SNOMED CT concept that might be the child.
+            sct_id_B (int):
+                ID of the SNOMED CT concept that might be the parent.
+        
+        Returns:
+            True if sct_id_A is child of sct_id_B. False otherwise.
+        """
         if sct_id_A in self.concepts:
             parent_ids = [destID for destID, typeID in self.concepts[sct_id_A]['relations'] if typeID == IS_A_ID]
         elif sct_id_A in self.metadata:
