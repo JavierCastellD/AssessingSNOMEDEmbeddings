@@ -10,6 +10,7 @@ train_concepts.txt
 corpus_*
 train_ft.py
 /embedding_models/__pycache__
+/preprocessing/__pycache__
 pizza.ttl
 config.cfg
-/datasets
+/datasets/datasets_*
