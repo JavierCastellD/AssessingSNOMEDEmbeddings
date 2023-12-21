@@ -21,7 +21,7 @@ class Snomed:
     Attributes:
         concepts (dict):
             A dictionary that maps each SCT-ID to a dictionary with the following keys: FSN, description, relations,
-            relationsAux, definition, and semantic_tag. Relations is a list of tuples (tail concept SCT-ID, relationship
+            relationsAux, definition, and semantic_type. Relations is a list of tuples (tail concept SCT-ID, relationship
             SCT-ID) that represents the relationships of the concept. RelationsAux is similar, but contains the inverse
             of the is-a relationships.
 
@@ -73,7 +73,7 @@ class Snomed:
                     if typeID == FULLY_SPECIFIED_NAME_ID:
                         match = re.search('(.+)(\(.+\))', description)
                         self.concepts[CID]['FSN'] = match.group(1).strip() 
-                        self.concepts[CID]['semantic_tag'] = match.group(2).strip()[1:-1]
+                        self.concepts[CID]['semantic_type'] = match.group(2).strip()[1:-1]
                         if match.group(1).strip() not in self.concepts[CID]['description']:
                             self.concepts[CID]['description'].append(match.group(1).strip())
                     elif description not in self.concepts[CID]['description'] and description == description:
@@ -85,12 +85,12 @@ class Snomed:
                                               'description': [match.group(1).strip()],
                                               'relations': [],
                                               'relationsAux': [], 'definition': '',
-                                              'semantic_tag': match.group(2).strip()[1:-1]}
+                                              'semantic_type': match.group(2).strip()[1:-1]}
                     else:
                         # This is to prevent a nan value
                         if description == description:
                             self.concepts[CID] = {'FSN': '', 'description': [description], 'relations': [],
-                                                'relationsAux': [], 'definition': '', 'semantic_tag': ''}
+                                                'relationsAux': [], 'definition': '', 'semantic_type': ''}
 
         # The file of definitions is optional
         if def_path is not None:
@@ -173,19 +173,19 @@ class Snomed:
         warnings.warn("Concept", sct_id, "was not found in this version of SNOMED CT.")
         return []
 
-    def get_semantic_tag(self, sct_id : int):
-        """Method that returns the semantic tag, that is what appears between parenthesis in the concept's FSN.
+    def get_semantic_type(self, sct_id : int):
+        """Method that returns the semantic type, that is what appears between parenthesis in the concept's FSN.
         
         Parameters:
             sct_id (int):
                 ID of a SNOMED CT concept.
         Returns:
-            A string that represents the semantic tag. It returns an empty string if the concept is not in SNOMED.
+            A string that represents the semantic type. It returns an empty string if the concept is not in SNOMED.
         """
         if sct_id in self.concepts:
-            return self.concepts[sct_id]['semantic_tag']
+            return self.concepts[sct_id]['semantic_type']
         elif sct_id in self.metadata:
-            return self.metadata[sct_id]['semantic_tag']
+            return self.metadata[sct_id]['semantic_type']
         warnings.warn("Concept", sct_id, "was not found in this version of SNOMED CT.")
         return ''
     
