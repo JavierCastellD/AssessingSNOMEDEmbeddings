@@ -366,7 +366,7 @@ class Snomed:
         
         return False
 
-# Methods that need an embedding model to work
+    # Methods that need an embedding model to work
     def get_most_similar_concept(self, word : str, n : int = 1):
         '''Method that returns the most similar concept to the string that receives as a parameter. This is
         done by performing cosine similarity between embeddings.
