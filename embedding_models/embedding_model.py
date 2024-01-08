@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import warnings
 
 class EmbeddingModel(ABC):
     '''Abstract class that represents an embedding model, such as BERT, FastText, etc. 
@@ -22,6 +23,8 @@ class EmbeddingModel(ABC):
             self.model = self.load_model(model_path)
         elif corpora is not None: 
             self.model = self.train_model(corpora)
+        else:
+            warnings.warn('Neither model path to load nor corpora to train were given.')
 
     @abstractmethod
     def train_model(self, corpora : list[str]):
