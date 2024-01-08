@@ -7,6 +7,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 DEFAULT_LOSS_FUNCTION = 'mean_absolute_error'
 DEFAULT_OPTIMIZER_FUNCTION = 'adam'
 
+SIMILARITY_INDEX = 0
+ID_INDEX = 1
+
 class EmbeddingPredictor():
     """Class that represents a neural network used for outputing embeddings that predict either relationships or concepts.
     The prediction is done by performing multi-dimensional regression, and then using cosine similarity to find the closest
@@ -150,7 +153,101 @@ class EmbeddingPredictor():
         return model
     
     def train_model(self, X_train, y_train, X_dev = None, y_dev = None, verbose : int = 1):
-        pass
+        """Method to train the model. If X_dev and y_dev are not None, then validation data will also be returned. 
+        
+        Parameters:
+            X_train:
+                Input data for training, which can be a numpy array, tensorflow tensor, etc.
+            y_train:
+                Target data for training. Similar to X_train, and should be consistent with it.
+            X_dev:
+                Input data for validation.
+            y_dev:
+                Target data for validation.
+            verbose (int):
+                Verbosity mode, where 0 is silent, 1 is a progress bar, and 2 is a single line.
+        
+        Returns:
+            A History keras object, which records the training and validation loss and metrics values at successive epochs.
+        """
+        if X_dev is not None and y_dev is not None:
+            history = self.model.fit(X_train, y_train, batch_size=self.batch_size,
+                                     epochs=self.epochs, verbose=verbose,
+                                     validation_data=(X_dev, y_dev))
+        else:
+            history = self.model.fit(X_train, y_train, batch_size=self.batch_size,
+                                     epochs=self.epochs, verbose=verbose)
 
-    def predict(self,):
-        pass
+        return history
+
+    def predict(self, X_test, X_ids = None, return_top10 : bool = True):
+        """Method to perform the prediction using the input data X_test. If the tuple X_ids is not None, and rules
+        was set during the initialization of the class, those rules are used to filter results.
+        
+        Parameters:
+            X_test:
+                Input data for prediction, which can be a numpy array, tensorflow tensor, etc.
+            X_ids:
+                List of tuples of size consistent with X_test, that contains the values needed for using the rules 
+                for filtering.
+            return_top10 (bool):
+                Whether to return the 10 most similar concepts for each entry in the input data, or just the most
+                similar.
+        
+        Returns:
+            A list of size consistent with X_test, that contains the predictions obtained by the network.
+        """
+        # Extract IDs and embeddings from the target embedding space
+        space_ids = list(self.embedding_space.keys())
+        space_embeddings = list(self.embedding_space.values())
+
+        # List to store the predicted values after searching in the embedding space
+        predicted_values = []
+        
+        # Perform the prediction
+        prediction = self.model.predict(X_test)
+
+        # Perform the cosine similarity searching between the prediction and the embeddings from the target space
+        similarity_values = cosine_similarity(prediction, space_embeddings)
+        
+        
+        for i in range(len(similarity_values)):
+            similarity_value = similarity_values[i]
+            
+            # We zip the similarity values with the space ids, and sort it
+            # to find which is the most similar ID from the target space
+            sim_zip = list(zip(similarity_value, space_ids))
+            sim_zip.sort(key = lambda x : x[SIMILARITY_INDEX], reverse=True)
+
+            # If there are filtering rules, and IDs to use it, we filter the results
+            if self.rules is not None and X_ids is not None:
+                rules_keys_ids = X_ids[i]
+                possible_targets = []
+
+                # Obtain the possible targets using the rules dictionary
+                for first_level_key  in rules_keys_ids[0]:
+                    if first_level_key in self.rules:
+                        for second_level_key in rules_keys_ids[1]:
+                            if second_level_key in self.rules[first_level_key][second_level_key]:
+                                possible_targets += self.rules[first_level_key][second_level_key]
+
+                # We only keep the results that are part of the possible targets
+                if len(possible_targets) > 0:
+                    sim_zip_aux = []
+
+                    for value_zip in sim_zip:
+                        target_id = value_zip[ID_INDEX]
+                        if target_id in possible_targets:
+                            sim_zip_aux.append(value_zip)
+
+                    sim_zip = sim_zip_aux
+            
+            # We either return the top 10 values for metric purposes (to study top5, top10, etc.)
+            # or we return only the most similar
+            if return_top10:
+                predicted_values.append(sim_zip[:10])
+            else:
+                predicted_values.append(sim_zip[0]) 
+   
+
+        return predicted_values
