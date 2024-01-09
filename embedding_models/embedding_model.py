@@ -71,3 +71,30 @@ class EmbeddingModel(ABC):
             An embedding.
         '''
         pass
+
+    def get_embedding_from_list(self, names_list : list, agg_average : bool = True):
+        '''Method to obtain an embedding by aggregating the embedding of different words. If agg_average is 
+        set to True, the aggregation is done by averaging the embeddings. Otherwise, the aggregation is done
+        by a sum.
+        
+        Parameters:
+            names_list (list):
+                List of Strings that represents the words from which to obtain the embedding.
+            
+            agg_average (bool):
+                Whether to aggregate by averaging or summing.
+        Returns:
+            An embedding.
+        '''
+        vectors = []
+
+        if len(names_list) == 0:
+            return []
+
+        for name in names_list:
+            vectors.append(self.get_embedding(name))
+        
+        if agg_average:
+            return sum(vectors)/len(vectors)
+        else:
+            return sum(vectors)
