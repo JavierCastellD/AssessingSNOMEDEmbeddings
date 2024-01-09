@@ -195,7 +195,9 @@ class EmbeddingPredictor():
                 similar.
         
         Returns:
-            A list of size consistent with X_test, that contains the predictions obtained by the network.
+            If return_top10 is set to True, returns a list of size consistent with X_test, where each entry is a
+            list of up to 10 tuples (similarity_value, relation_id). If set to False, returns a list of tuples
+            (similarity_value, relation_id).
         """
         # Extract IDs and embeddings from the target embedding space
         space_ids = list(self.embedding_space.keys())
