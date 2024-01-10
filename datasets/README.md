@@ -6,7 +6,7 @@
   harder to perform analogy prediction (1/300.000) than relation prediction (1/50).
 
 ### IS SON OF CLASSIFICATION
-- Whether one concept is the son of the other concept.
+- Whether one concept is the immediate son of the other concept.
 - For each positive instance of a relation, there is also a negative instance for the same subject concept.
 - The possible range of negative instances depends on the domain:
     - If the domain is train, the range is train.
@@ -18,7 +18,7 @@
     - Negative samples concepts are of similar semantic type to the positive instance, so that false triples comply with SNOMED CT logical model for the semantic type.
 
 ### IS THERE RELATION CLASSIFICATION
-- Whether there is a relation between two concepts of SNOMED CT.
+- Whether there is a non-is-a direct relation between two concepts of SNOMED CT.
 - For each positive instance of a relation, there is also a negative instance for the same subject concept.
 - The possible range of negative instances depends on the domain:
     - If the domain is train, the range is train.
