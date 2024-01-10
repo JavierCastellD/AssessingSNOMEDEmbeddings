@@ -150,6 +150,8 @@ top10 = 0
 for top10_prediction, rel_id in zip(predictions, y_dev_ids):
     predicted_ids = [predicted_id for _, predicted_id in top10_prediction]
     
+    # Find if any of the top 10 predictions for the given row is correct
+    # and in which position among them
     correct_prediction_pos = 0
     for predicted_id in predicted_ids:
         if predicted_id == rel_id:
