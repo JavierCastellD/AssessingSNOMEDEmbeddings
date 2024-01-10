@@ -65,7 +65,36 @@ if relation_prediction:
         y_dev_ids.append(relation_id)
 else:
     # TODO: Falta decidir la entrada para el caso de analogy prediction
-    pass
+    for subject_id, relation_id, object_id  in zip(dataset_train['subject_id'], dataset_train['relation_id'], dataset_train['object_id']):
+        subject_descriptions = snomed.get_descriptions(subject_id)
+        relation_name = snomed.get_fsn(relation_id)
+        
+        subject_embedding = embedding_model.get_embedding_from_list(subject_descriptions)
+        relation_embedding = embedding_model.get_embedding(relation_name)
+        # relation_embedding = embedding_model.get_embedding(str(relation_id))
+
+        X_train.append(np.concatenate([subject_embedding, relation_embedding]))
+        
+        object_descriptions = snomed.get_descriptions(object_id)
+        object_embedding = embedding_model.get_embedding_from_list(object_descriptions)
+
+        y_train.append(object_embedding)
+    
+    for subject_id, relation_id, object_id in zip(dataset_dev['subject_id'], dataset_dev['relation_id'], dataset_dev['object_id']):
+        subject_descriptions = snomed.get_descriptions(subject_id)
+        relation_name = snomed.get_fsn(relation_id)
+
+        subject_embedding = embedding_model.get_embedding_from_list(subject_descriptions)
+        relation_embedding = embedding_model.get_embedding(relation_name)
+        # relation_embedding = embedding_model.get_embedding(str(relation_id))
+
+        X_dev.append(np.concatenate([subject_embedding, relation_embedding]))
+
+        object_descriptions = snomed.get_descriptions(object_id)
+        object_embedding = embedding_model.get_embedding_from_list(object_descriptions)
+
+        y_dev.append(object_embedding)
+        y_dev_ids.append(object_id)
 
 # Obtain the target space
 target_space = {}

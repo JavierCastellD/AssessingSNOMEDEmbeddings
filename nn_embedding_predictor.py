@@ -118,8 +118,9 @@ class EmbeddingPredictor():
         if self.relation_prediction:
             model.add(InputLayer(input_shape=(self.embedding_size * 2, )))
         else:
-            # TODO: We need to decide the input for the analogy prediction task
-            pass
+            # TODO: For analogy prediction we are testing with an embedding for subject and an embedding for the relation
+            # TODO: A possible alternative is the use of only one embedding + relation_id
+            model.add(InputLayer(input_shape=(self.embedding_size * 2, )))
 
         # Hidden layers of the model
         for i in range(len(self.dense_layers)):
