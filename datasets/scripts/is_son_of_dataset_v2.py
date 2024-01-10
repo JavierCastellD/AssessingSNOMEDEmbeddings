@@ -24,7 +24,6 @@ with open('test_concepts.txt', 'r') as concepts_file:
 snomed = Snomed('snomed_data/conceptInternational_20221031.txt', 'snomed_data/relationshipInternational_20221031.txt', 'snomed_data/descriptionInternational_20221031.txt')
 
 # Create is son of direct relation dataset
-# Create is son of direct relation dataset
 concept_list = test_concepts
 concepts_b_list = train_concepts + dev_concepts + test_concepts
 
