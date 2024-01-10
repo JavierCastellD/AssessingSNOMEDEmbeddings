@@ -4,6 +4,10 @@ from snomed import Snomed
 import pandas as pd
 import numpy as np
 
+# The current tasks that we are considering that require using multi-regression are:
+# 1. Relation prediction, i.e., given a subject and object, predict which relation exists between them
+# 2. Analogy/Object prediction, i.e., given a subject and a relationship, predict the object of that triple
+
 # If the task is relation prediction, it should be set to true
 # If the task is analogy prediction, it should be set to false
 relation_prediction = True
