@@ -23,7 +23,7 @@ class Word2VecEM(EmbeddingModel):
 
     '''
     def __init__(self, vector_size : int = 200, language : str = 'english', model_path: str = None, corpora: list[str] = None,
-                 preprocess_pipeline : PreprocessEM = PreprocessGensimSCT):
+                 preprocess_pipeline : PreprocessEM = PreprocessGensimSCT()):
         '''Method to load the Word2Vec model. If model_path is given as parameter, the model will be loaded. Otherwise, the model
         will be trained from the corpora parameter. The method expects to receive at least one of those parameters.
         

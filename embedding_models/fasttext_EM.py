@@ -21,7 +21,7 @@ class FastTextEM(EmbeddingModel):
             PreprocessEM object to preprocess the text used for training the model and creating the embedding.
     '''
     def __init__(self, vector_size : int = 200, language : str = 'english', model_path: str = None, corpora: list[str] = None, 
-                 preprocess_pipeline : PreprocessEM = PreprocessGensimSCT):
+                 preprocess_pipeline : PreprocessEM = PreprocessGensimSCT()):
         '''Method to load the FastText model. If model_path is given as parameter, the model will be loaded. Otherwise, the model
         will be trained from the corpora parameter. The method expects to receive at least one of those parameters. 
         
