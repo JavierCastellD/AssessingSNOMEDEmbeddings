@@ -1,4 +1,3 @@
-import tensorflow as tf
 import keras
 from keras import regularizers
 from keras.layers import InputLayer, Dense, Activation, Dropout, BatchNormalization
@@ -10,13 +9,20 @@ DEFAULT_OPTIMIZER_FUNCTION = 'adam'
 SIMILARITY_INDEX = 0
 ID_INDEX = 1
 
-class EmbeddingPredictor():
+class EmbeddingPredictor:
     """Class that represents a neural network used for outputing embeddings that predict either relationships or concepts.
     The prediction is done by performing multi-dimensional regression, and then using cosine similarity to find the closest
     concept in the embedding_space to that value.
     
     Attributes:
-        embedding_space (dict)
+        embedding_space (dict):
+            Dictionary that stores which entities we want to be predicted. It associates the ids of the entitites to embeddings.
+        rules (dict):
+            Two level dictionary used for filtering the possible options in the prediction. The two keys are
+            the elements used in the Neural Network, while the value is the corresponding set of options for said input.
+        model (keras.Sequential):
+            Neural network with the architecture defined in the constructor used for prediction.
+        
 
     """
     def __init__(self, embedding_space : dict, batch_size : int, epochs : int, dense_layers : list, 
@@ -58,7 +64,7 @@ class EmbeddingPredictor():
                 Represents if the task of the Neural Network will be relation prediction (True) or analogy prediction (False).
             rules (dict):
                 Two level dictionary used for filtering the possible options in the prediction. The two keys are
-                the elements used in the Neural Network, while the value is set the of options.
+                the elements used in the Neural Network, while the value is a set of options for that input.
             
         """
         # Set the embedding space, so that after predicting the embedding, the similarity is
