@@ -25,7 +25,7 @@ desc_path = "snomed_data/descriptionInternational_20221031.txt"
 snomed = Snomed(con_path, rel_path, desc_path)
 
 # Load the embedding model
-embedding_model = FastTextEM("TODO")
+embedding_model = FastTextEM(model_path="models/ft_2_2_20221031.model")
 
 # Load the dataset
 if task == 1: # is son of
