@@ -14,3 +14,4 @@ train_ft.py
 pizza.ttl
 config.cfg
 /datasets/datasets_*
+/models
