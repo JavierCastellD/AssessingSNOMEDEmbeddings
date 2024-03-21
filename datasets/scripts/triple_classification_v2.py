@@ -21,7 +21,11 @@ with open('test_concepts.txt', 'r') as concepts_file:
     for line in concepts_file.readlines():
         test_concepts.append(int(line))
 
-snomed = Snomed('snomed_data/conceptInternational_20221031.txt', 'snomed_data/relationshipInternational_20221031.txt', 'snomed_data/descriptionInternational_20221031.txt')
+concept_path = "./snomed_data/conceptInternational_20240101.txt"
+relationship_path = "./snomed_data/relationshipInternational_20240101.txt"
+description_path = "./snomed_data/descriptionInternational_20240101.txt"
+
+snomed = Snomed(concept_path, relationship_path, description_path)
 
 # Create triple classification dataset
 concept_list = train_concepts
@@ -59,7 +63,8 @@ for concept in concept_list:
 
             obj_sem_type = snomed.get_semantic_type(object_id)
 
-            if obj_sem_type in concepts_per_sem_type: # To prevent errors with concepts that do not have FSN according in the SCT files
+            # To prevent errors with concepts that do not have FSN according in the SCT files or with concepts such as "special concept" or similar ones with special semantic types
+            if obj_sem_type in concepts_per_sem_type and len(concepts_per_sem_type[obj_sem_type]) > 1:
                 # Add the positive example
                 # Append IDs
                 subject_concepts.append(concept)

@@ -21,7 +21,11 @@ with open('test_concepts.txt', 'r') as concepts_file:
     for line in concepts_file.readlines():
         test_concepts.append(int(line))
 
-snomed = Snomed('snomed_data/conceptInternational_20221031.txt', 'snomed_data/relationshipInternational_20221031.txt', 'snomed_data/descriptionInternational_20221031.txt')
+concept_path = "./snomed_data/conceptInternational_20240101.txt"
+relationship_path = "./snomed_data/relationshipInternational_20240101.txt"
+description_path = "./snomed_data/descriptionInternational_20240101.txt"
+
+snomed = Snomed(concept_path, relationship_path, description_path)
 
 # Create analogies dataset
 concept_list = test_concepts

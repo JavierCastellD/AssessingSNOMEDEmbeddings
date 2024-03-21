@@ -21,14 +21,20 @@ with open('test_concepts.txt', 'r') as concepts_file:
     for line in concepts_file.readlines():
         test_concepts.append(int(line))
 
-snomed = Snomed('snomed_data/conceptInternational_20221031.txt', 'snomed_data/relationshipInternational_20221031.txt', 'snomed_data/descriptionInternational_20221031.txt')
+concept_path = "./snomed_data/conceptInternational_20240101.txt"
+relationship_path = "./snomed_data/relationshipInternational_20240101.txt"
+description_path = "./snomed_data/descriptionInternational_20240101.txt"
+
+snomed = Snomed(concept_path, relationship_path, description_path)
 
 # Create relation prediction dataset
-concept_list = dev_concepts
+concept_list = train_concepts
 
 relation_types = {}
 total = 0
-for concept in train_concepts + test_concepts + dev_concepts:
+
+# We establish the frequency of relationships considering the whole dataset
+for concept in train_concepts + dev_concepts + test_concepts:
     for rel_id, object_id in snomed.get_related_concepts(concept):
         if rel_id != IS_A_ID:
             # Count the number of relations, as we will filter out 
