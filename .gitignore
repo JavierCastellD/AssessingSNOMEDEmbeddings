@@ -13,5 +13,5 @@ train_ft.py
 /preprocessing/__pycache__
 pizza.ttl
 config.cfg
-/datasets/datasets_*
+/datasets/datasets*
 /models
