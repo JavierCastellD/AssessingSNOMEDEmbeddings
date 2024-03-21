@@ -72,7 +72,24 @@ class EmbeddingModel(ABC):
         '''
         pass
 
-    def get_embedding_from_list(self, names_list : list, agg_average : bool = True):
+    def get_embeddings(self, words_list : list[str]):
+        '''Method to obtain the embedding for a list of strings.
+        
+        Parameters:
+            words_list (list):
+                List of strings of which to obtain the embeddings.
+        
+        Returns:
+            A list of embeddings. The list will be of the same length of words_list.
+        '''
+        embeddings = []
+        for word in words_list:
+            embeddings.append(self.get_embedding(word))
+        
+        return embeddings
+
+
+    def get_embedding_from_list(self, names_list : list[str], agg_average : bool = True):
         '''Method to obtain an embedding by aggregating the embedding of different words. If agg_average is 
         set to True, the aggregation is done by averaging the embeddings. Otherwise, the aggregation is done
         by a sum.
