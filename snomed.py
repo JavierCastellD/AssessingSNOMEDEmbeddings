@@ -227,8 +227,11 @@ class Snomed:
             The SCT-ID of the top level concept.
         """
         if sct_id in TOP_CONCEPTS:
-                return sct_id
+            return sct_id
         
+        if sct_id == ROOT_CONCEPT or sct_id == METADATA_ROOT:
+            return sct_id
+
         if sct_id in self.concepts:
             parent_id = [destID for destID, typeID in self.concepts[sct_id]['relations'] if typeID == IS_A_ID][0]
         elif sct_id in self.metadata:
@@ -283,7 +286,7 @@ class Snomed:
             return -1.
         """
         if sct_id == ROOT_CONCEPT:
-                return 1
+            return 1
         
         if sct_id in self.concepts:
             parent_id = [destID for destID, typeID in self.concepts[sct_id]['relations'] if typeID == IS_A_ID][0]
@@ -316,6 +319,31 @@ class Snomed:
             concepts_list += list(self.metadata.keys())
 
         return concepts_list
+    
+    def get_children_of(self, sct_id : int):
+        """Method that returns the concepts in SNOMED CT that are children of sct_id. This method travels through the 
+        whole hiearchy, so not only direct children are returned.
+        
+        Parameters:
+            sct_id (int):
+                ID of a SNOMED CT concept.
+        
+        Returns:
+            A list of integers representing SCT_IDs.
+        """
+        if sct_id in self.concepts:
+            children_ids = self.concepts[sct_id]['relationsAux']
+        elif sct_id in self.metadata:
+            children_ids = self.metadata[sct_id]['relationsAux']
+        else:
+            warnings.warn("Concept", sct_id, "was not found in this version of SNOMED CT.")
+            return []
+        
+        children = [sct_id]
+        for children_id in children_ids:
+            children += self.get_children_of(children_id)
+
+        return list(set(children))
     
     def is_leaf_concept(self, sct_id : int):
         """Method that returns if a concept in SNOMED CT is a leaf concept or not. A leaf concept
