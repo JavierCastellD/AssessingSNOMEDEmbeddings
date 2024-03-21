@@ -1,10 +1,10 @@
 import nltk
 import warnings
 import numpy as np
-from embedding_models.embedding_model import EmbeddingModel
+from .embedding_model import EmbeddingModel
 from gensim.models.word2vec import Word2Vec
-from preprocessing.preprocess_em import PreprocessEM
-from preprocessing.preprocess_gensim_sct import PreprocessGensimSCT
+from ..preprocessing.preprocess_em import PreprocessEM
+from ..preprocessing.preprocess_gensim_sct import PreprocessGensimSCT
 
 SEED = 1234
 
