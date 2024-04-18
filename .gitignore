@@ -1,7 +1,6 @@
 /.venv
 /snomed_data
 /testing_embeddings.ipynb
-/__pycache__
 SNOMEDEmbeddingsTest.code-workspace
 dev_concepts.txt
 test_concepts.txt
@@ -9,9 +8,8 @@ train_concepts.txt
 /mimic_notes
 corpus_*
 train_ft.py
-/python_libraries/embedding_models/__pycache__
-/python_libraries/preprocessing/__pycache__
 pizza.ttl
 config.cfg
 /datasets/datasets*
 /models
+*__pycache__*
