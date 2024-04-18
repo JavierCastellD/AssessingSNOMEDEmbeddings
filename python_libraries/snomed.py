@@ -5,7 +5,7 @@ import warnings
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
-from embedding_models.embedding_model import EmbeddingModel
+from .embedding_models.embedding_model import EmbeddingModel
 
 
 
