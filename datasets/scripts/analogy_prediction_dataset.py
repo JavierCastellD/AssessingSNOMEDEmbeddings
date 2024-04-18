@@ -1,5 +1,5 @@
 # Load info to create datasets
-from snomed import Snomed
+from python_libraries.snomed import Snomed
 import pandas as pd 
 
 IS_A_ID = 116680003
