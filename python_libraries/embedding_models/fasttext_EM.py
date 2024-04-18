@@ -1,9 +1,10 @@
-from .embedding_model import EmbeddingModel
 from gensim.models.fasttext import FastText
-from preprocessing.preprocess_em import PreprocessEM
-from preprocessing.preprocess_gensim_sct import PreprocessGensimSCT
-import numpy as np
 import nltk
+import numpy as np
+
+from .embedding_model import EmbeddingModel
+from ..preprocessing.preprocess_em import PreprocessEM
+from ..preprocessing.preprocess_gensim_sct import PreprocessGensimSCT
 
 SEED = 1234
 

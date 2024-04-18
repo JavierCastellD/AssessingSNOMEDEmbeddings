@@ -1,7 +1,8 @@
-from preprocessing.preprocess_em import PreprocessEM
-from re import Match
 import nltk
 import re
+from re import Match
+
+from .preprocess_em import PreprocessEM
 
 def remove_break(match : Match):
     """Auxiliary function used for only substituting break lines for spaces from the regex expression.

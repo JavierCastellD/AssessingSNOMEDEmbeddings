@@ -1,6 +1,7 @@
-from preprocessing.preprocess_em import PreprocessEM
 import nltk
 import re
+
+from .preprocess_em import PreprocessEM
 
 class PreprocessGensimSCT(PreprocessEM):
     '''Class that represents the preprocessing pipeline for gensim's implementation of Word2Vec and FastText for
