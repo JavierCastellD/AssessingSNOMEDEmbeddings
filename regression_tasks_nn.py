@@ -131,6 +131,9 @@ else:
 X_train = np.array(X_train)
 X_test = np.array(X_test)
 
+y_train = np.array(y_train)
+y_test = np.array(y_test)
+
 # Obtain the target space
 target_space = {}
 
@@ -142,8 +145,13 @@ if relation_prediction:
         #target_space[target_id] = embedding_model.get_embedding(str(target_id))
 else:
     for concept_id in snomed.get_sct_concepts(metadata=False):
-        descriptions = snomed.get_descriptions(concept_id)
-        target_space[concept_id] = embedding_model.get_embedding_from_list(descriptions)
+        if concept_dictionary is not None:
+            target_embedding = concept_dictionary[str(concept_id)]
+        else:
+            descriptions = snomed.get_descriptions(concept_id)
+            target_embedding = embedding_model.get_embedding_from_list(descriptions)
+
+        target_space[concept_id] = target_embedding
 
 # Define the neural network hyperparameters
 batch_size = 256
