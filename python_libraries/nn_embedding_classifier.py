@@ -1,8 +1,8 @@
 import keras
-from keras import regularizers
+from keras import regularizers, optimizers
 from keras.layers import InputLayer, Dense, Activation, Dropout, BatchNormalization
 
-DEFAULT_LOSS_FUNCTION = 'mean_absolute_error'
+DEFAULT_LOSS_FUNCTION = 'categorical_crossentropy'
 DEFAULT_OPTIMIZER_FUNCTION = 'adam'
 
 SIMILARITY_INDEX = 0
@@ -20,7 +20,7 @@ class EmbeddingClassifier:
                  dropout_layers : list = None, activation_function : str = 'relu', 
                  kernel_initializer : str = 'glorot_uniform', batch_normalization : str = None,
                  regularization_type : str = None, l1_regularization : float = 0.01, l2_regularization : float = 0.01,
-                 embedding_size : int = 200):
+                 optimizer_function : str = 'adam', learning_rate : float = 0.001, embedding_size : int = 200):
         """
         Parameters:
             number_of_classes (int):
@@ -51,6 +51,11 @@ class EmbeddingClassifier:
                 Float value that represents the l1 regularization to apply if regularization_type is 'l1' or 'l1l2'.
             l2_regularization (float):
                 Float value that represents the l2 regularization to apply if regularization_type is 'l2' or 'l1l2'.
+            optimizer_function (str):
+                String that represents which optimizer to use, i.e, the function to adjust the weights of the neural network. The ones available are:
+                adam, sgd, rmsprop, adadelta, adagrad, adamax, and nadam.
+            learning_rate (float):
+                Float value between 0 and 1 that represents the learning rate for the optimizer.
             embedding_size (int):
                 Number of dimensions of the embeddings.
         """
@@ -84,6 +89,23 @@ class EmbeddingClassifier:
             self.regularization = regularizers.L1L2(l1=l1_regularization, l2=l2_regularization)
         else:
             self.regularization = None
+
+        if optimizer_function == 'adam':
+          self.optimizer_function = optimizers.Adam(learning_rate)
+        elif optimizer_function == 'sgd':
+          self.optimizer_function = optimizers.SGD(learning_rate)
+        elif optimizer_function == 'rmsprop':
+          self.optimizer_function = optimizers.RMSprop(learning_rate)
+        elif optimizer_function == 'adadelta':
+          self.optimizer_function = optimizers.Adadelta(learning_rate)
+        elif optimizer_function == 'adagrad':
+          self.optimizer_function = optimizers.Adagrad(learning_rate)
+        elif optimizer_function == 'adamax':
+          self.optimizer_function = optimizers.Adamax(learning_rate)
+        elif optimizer_function == 'nadam':
+          self.optimizer_function = optimizers.Nadam(learning_rate)
+        else:
+          self.optimizer_function = DEFAULT_OPTIMIZER_FUNCTION
 
         self.model = self.build_model()
 
@@ -127,7 +149,7 @@ class EmbeddingClassifier:
 
         # Compile the model
         model.compile(loss= DEFAULT_LOSS_FUNCTION,
-                      optimizer=DEFAULT_OPTIMIZER_FUNCTION,
+                      optimizer=self.optimizer_function,
                       metrics=["categorical_accuracy"])
 
         return model
