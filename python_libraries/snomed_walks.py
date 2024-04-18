@@ -1,6 +1,8 @@
-from snomed import Snomed
 import random
 import math
+
+from python_libraries.snomed import Snomed
+
 
 def snomed_walks(snomed : Snomed, depth : int = 1, concepts : list = None):
     """Method that returns each walk up to a given depth from SNOMED CT. If concepts

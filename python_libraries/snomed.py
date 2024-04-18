@@ -1,9 +1,14 @@
-import pandas as pd
-from embedding_models.embedding_model import EmbeddingModel
 from collections.abc import Iterable
-from sklearn.metrics.pairwise import cosine_similarity
-import warnings
 import re
+import warnings
+
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+
+from embedding_models.embedding_model import EmbeddingModel
+
+
+
 
 # SCT-Codes
 FULLY_SPECIFIED_NAME_ID = 900000000000003001
