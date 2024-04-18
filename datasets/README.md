@@ -2,8 +2,7 @@
 ### ANALOGY PPREDICTION
 - Dataset about predicting the possible object concept given the subject concept and the relationship.
 - The IS_A relation is not part of the dataset.
-- The dataset is the same as RELATION PREDICTION, although the columns are in a different order. Nevertheless, is significantly
-  harder to perform analogy prediction (1/300.000) than relation prediction (1/51).
+- The dataset is the same as RELATION PREDICTION, although the columns are in a different order. Nevertheless, is significantly harder to perform analogy prediction (1/300.000) than relation prediction (1/51).
 
 ### IS SON OF CLASSIFICATION
 - Whether one concept is the immediate son of the other concept.
@@ -37,12 +36,15 @@
   
 ### SEMANTIC TYPE CLASSIFICATION
 - Dataset about predicting which of the semantic types the concept is related to.
-- There are 20 different semantic types if we filter out concepts with no relationship other than is a. Otherwise, there are 45 semantic types.
+- There are 20 different semantic types if we filter out concepts with no relationship other than is a. Otherwise, there are 30 semantic types.
+- We excluded the following hierarchies: metadata, special concept, record artifact, and social context.
+- We also removed the following semantic types, as there were not enough instances: release characteristic, state of matter, transformation, administration method, intended site, staging scale.
 - It is unbalanced towards disorder, procedure, finding, and body structure.
 
 ### TOP LEVEL HIERARCHY CLASSIFICATION
 - Dataset about predicting which of the top level hierarchies the concept is related to.
-- There are 11 different top level hierarchies if we filter out concepts with no relationship other than is a. Otherwise, there are 18 semantic types.
+- There are 11 different top level hierarchies if we filter out concepts with no relationship other than is a. Otherwise, there are 15 different hierarchies.
+- We excluded the following hierarchies: metadata, special concept, record artifact, and social context.
 - It is unbalanced towards clinical finding and procedure.
 
 ### TRIPLE CLASSIFICATION
