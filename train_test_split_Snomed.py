@@ -1,5 +1,6 @@
-from snomed import Snomed, IS_A_ID
 import random
+
+from python_libraries.snomed import Snomed, IS_A_ID
 
 def list_contains_other_id(id_list : list, id : int):
     """Method that returns whether a list contains an ID different from id.
