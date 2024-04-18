@@ -9,8 +9,8 @@ train_concepts.txt
 /mimic_notes
 corpus_*
 train_ft.py
-/embedding_models/__pycache__
-/preprocessing/__pycache__
+/python_libraries/embedding_models/__pycache__
+/python_libraries/preprocessing/__pycache__
 pizza.ttl
 config.cfg
 /datasets/datasets*

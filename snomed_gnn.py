@@ -1,9 +1,11 @@
-import torch
-import numpy as np
-from torch_geometric.data import HeteroData
 import warnings
-from snomed import Snomed
-from embedding_models.embedding_model import EmbeddingModel
+
+import numpy as np
+import torch
+from torch_geometric.data import HeteroData
+
+from python_libraries.embedding_models.embedding_model import EmbeddingModel
+from python_libraries.snomed import Snomed
 
 class SnomedData(HeteroData):
     """Class that representents a Heterogeneous Graph derived from SNOMED CT so that it can be used for GNN tasks.

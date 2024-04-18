@@ -1,8 +1,8 @@
 import warnings
 import numpy as np
 import pandas as pd
-from snomed import Snomed
-from embedding_models.fasttext_EM import FastTextEM
+from python_libraries.snomed import Snomed
+from python_libraries.embedding_models.fasttext_EM import FastTextEM
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV

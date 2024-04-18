@@ -1,8 +1,10 @@
-from snomed import Snomed
+import math
+import random
+
 from rdflib import Graph, URIRef
 from rdflib.namespace import RDFS, SKOS
-import random
-import math
+
+from python_libraries.snomed import Snomed
 
 LABELS_PREDICATES = [RDFS.label, SKOS.altLabel, SKOS.prefLabel, SKOS.hiddenLabel]
 

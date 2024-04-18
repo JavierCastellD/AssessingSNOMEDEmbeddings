@@ -1,6 +1,6 @@
 # Script to train an embedding model in walk corpus
-from snomed import Snomed
-from snomed_walks import create_walk_corpus
+from python_libraries.snomed import Snomed
+from python_libraries.snomed_walks import create_walk_corpus
 
 # Load SNOMED CT
 concept_path = "./snomed_data/conceptInternational_20221031.txt"
