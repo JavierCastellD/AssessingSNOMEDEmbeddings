@@ -3,11 +3,6 @@ import re
 import warnings
 
 import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
-
-from .embedding_models.embedding_model import EmbeddingModel
-
-
 
 
 # SCT-Codes
@@ -33,14 +28,8 @@ class Snomed:
         metadata (dict):
             A dictionary that maps each SCT-ID from a metadata concept to a dictionary with the same keys as the
             concepts' attribute.
-
-        model (EmbeddingModel):
-            Embedding model used for generating embeddings of each concept. This can be None.
-
-        embeddings (dict):
-            A dictionary that maps each SCT-ID to an embedding. This can be None if there is no model.
     """
-    def __init__(self, con_path: str, rel_path: str, desc_path: str, def_path: str = None, embedding_model : EmbeddingModel = None):
+    def __init__(self, con_path: str, rel_path: str, desc_path: str, def_path: str = None):
         """Loads SNOMED-CT from certain files.
 
         Parameters:
@@ -52,8 +41,6 @@ class Snomed:
                 Path to the descriptions file from a national or the international release.
             def_path (str):
                 Path to the definitions file from a national or the international release. This is optional.
-            embedding_model (EmbeddingModel):
-                Represents an embedding model, and it should be a subclass of EmbeddingModel. This is optional.
         """
 
         concepts_pd = pd.read_csv(con_path, delimiter='\t')
@@ -128,22 +115,6 @@ class Snomed:
                     unexplored_metadata.append(destID)
 
                 self.metadata[sourceID] = self.concepts.pop(sourceID)
-        
-        # Loading the embedding model and creating embeddings
-        if embedding_model is not None:
-            self.model = embedding_model
-            self.embeddings = dict()
-
-            for conceptID, concept in self.concepts.items():
-                vectors = []
-                for name in concept['description']:
-                    vectors.append(self.model.get_embedding(name))
-                
-                self.embeddings[conceptID] = sum(vectors)/len(vectors)
-
-        else:
-            self.model = None
-            self.embeddings = None
 
     def get_fsn(self, sct_id : int):
         """Method that returns the full specified name (FSN) of a concept given its ID.
@@ -398,41 +369,3 @@ class Snomed:
                 return True
         
         return False
-
-    # Methods that need an embedding model to work
-    def get_most_similar_concept(self, word : str, n : int = 1):
-        '''Method that returns the most similar concept to the string that receives as a parameter. This is
-        done by performing cosine similarity between embeddings.
-        
-        Paramters:
-            word (str):
-                String of text from which to obtain the most similar concept.
-            n (int):
-                Number of similar concepts to retrieve. The default value is 1.
-        Returns:
-            A tuple (SCT-ID, sim_value), where the first element is the ID of the SNOMED concept, and the second
-            is the similarity score. If n is greater than 1, it returns a list of tuples with the n most similar 
-            concepts instead. If no embedding model was assigned, an empty list is returned.
-        '''
-        if self.model is None:
-            warnings.warn('No embedding model was assigned to Snomed.')
-            return []
-
-        vector = self.model.get_embedding(word)
-
-        dictionary_embeddings = list(self.embeddings.values())
-        dictionary_conceptids = list(self.embeddings.keys())
-
-        # Obtain the similarities between this vector and the embeddings
-        similarities = cosine_similarity(X=vector.reshape(1, -1), Y=dictionary_embeddings)[0]
-
-        # We join together the concepts_ids with the similarities and order it to get the most
-        # similar concept
-        sim_list = list(zip(dictionary_conceptids, similarities))
-        sim_list.sort(key=lambda x : x[1], reverse=True)
-
-        # Return a tuple (conceptID, similarity)
-        if n <= 1:
-            return sim_list[0]
-        else:
-            return sim_list[:n]
