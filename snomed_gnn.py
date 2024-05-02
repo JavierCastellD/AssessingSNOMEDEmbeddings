@@ -1,13 +1,14 @@
+import os
 import warnings
 
 import numpy as np
 import torch
-from torch_geometric.data import HeteroData
+from torch_geometric.data import HeteroData, Dataset
 
 from python_libraries.embedding_models.embedding_model import EmbeddingModel
 from python_libraries.snomed import Snomed
 
-class SnomedData(HeteroData):
+class SnomedData(Dataset):
     """Class that representents a Heterogeneous Graph derived from SNOMED CT so that it can be used for GNN tasks.
     Semantic tags or top level concepts are used as classes, whereas each concept is considered an entity/individual.
     Initial feature vectors are defined by using an EmbeddingModel on the different descriptions/names of each concept.
@@ -48,8 +49,21 @@ class SnomedData(HeteroData):
         # Set if semantic tags or top level concepts will be used as "classes"
         self._class_as_semantic_tag = class_as_semantic_tag
 
-        super().__init__(root)
+        super(SnomedData, self).__init__(root, transform=None, pre_transform=None)
         self.data = torch.load(self.processed_paths[0])
+
+    @property
+    def raw_file_names(self):
+        """ If this file exists in raw_dir, the download is not triggered.
+            (The download func. is not implemented here)  
+        """
+        return 'no_raw_file'
+
+    @property
+    def processed_file_names(self):
+        """ If these files are found in raw_dir, processing is skipped"""
+        return 'snomed_data.pt'
+
 
     def download(self):
         pass
@@ -206,3 +220,11 @@ class SnomedData(HeteroData):
         else:
             warnings.warn("No embedding model was given for SnomedData. An empty feature vector will be generated. WIP. ")
             return []
+        
+    def len(self):
+        return self.data.shape[0]
+    
+    def get(self, idx):
+        data = torch.load(os.path.join(self.processed_dir, f'data_{idx}.pt')) 
+
+        return data
