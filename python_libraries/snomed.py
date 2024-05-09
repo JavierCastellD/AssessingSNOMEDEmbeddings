@@ -243,7 +243,7 @@ class Snomed:
             parent_ids = [destID for destID, typeID in self.metadata[sct_id]['relations'] if typeID == IS_A_ID]
         else:
             warnings.warn("Concept", sct_id, "was not found in this version of SNOMED CT.")
-            return None
+            return []
             
         for parent_id in parent_ids:
             elements_from_top_list += self.get_top_concept_list(parent_id, top_list)
