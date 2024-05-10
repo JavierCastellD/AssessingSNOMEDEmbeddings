@@ -102,7 +102,7 @@ class SnomedEmbedder:
         self.sct2index = {}
         for i in range(len(self.embedding_sct_index)):
             concept_id = self.embedding_sct_index[i]
-            self.sct2index[i] = concept_id
+            self.sct2index[concept_id] = i
 
         # We use Faiss for fast similarity search, so we need to normalize the embeddings first
         faiss_embeddings = np.array(self.embedding_values).astype(np.float32)
@@ -162,11 +162,11 @@ class SnomedEmbedder:
         # Then, get the reference concept
         reference_concept_id = self.identify_reference_concept(clinical_term, sem_type, n=1)[0]
         
-        # We get the relationships of the reference concept
-        reference_relations = self.snomed.get_related_concepts(reference_concept_id)
+        # We get the unique relationships of the reference concept
+        reference_relations = list(set([rel_id for rel_id, _ in self.snomed.get_related_concepts(reference_concept_id)]))
 
         relations = []
-        for relation_id, _ in reference_relations:
+        for relation_id in reference_relations:
             target_concept_id = self.identify_target_concept(clinical_term, reference_concept_id, relation_id, n = 1, apply_filtering=True)[0]
 
             relations.append({'relation_name' : self.snomed.get_fsn(relation_id),
@@ -307,7 +307,8 @@ class SnomedEmbedder:
             # Since reference concept and the postcoordinaed concept should share the semantic type,
             # we can get if the concept is part of the valid ranges using the reference concept and the relation
             for concept_id in concept_ids:
-                if self.rules_filter.is_in_valid_range(reference_concept_id, relation_id, concept_id):
+                # If the relationship is the is a relation, we should not apply filtering
+                if relation_id == IS_A_ID or self.rules_filter.is_in_valid_range(reference_concept_id, relation_id, concept_id):
                     filtered_concept_ids.append(concept_id)
 
                     if len(filtered_concept_ids) == n:
