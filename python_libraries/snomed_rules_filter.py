@@ -3,7 +3,7 @@ import warnings
 import pandas as pd
 import re
 
-from snomed import Snomed
+from .snomed import Snomed
 
 class SnomedRulesFilter:
     """Class that represents the domain and range constraints for SNOMED CT and offers filtering functions based
@@ -179,3 +179,26 @@ class SnomedRulesFilter:
                 possible_ranges += self.dom_rel_range[domain_id][rel_id]
         
         return list(set(possible_ranges))
+    
+    def is_in_valid_range(self, subject_id : int, rel_id : int, concept_id : int) -> bool:
+        """Method that returns whether concept_id is a valid range for the triplet (subject_id, rel_id, concept_id).
+        
+        Parameters:
+            subject_id (int):
+                ID of the SNOMED CT concept that acts as subject of the relationship and defines the domain.
+            rel_id (int):
+                ID of the SNOMED CT relationship.
+            concept_id (int):
+                ID of the SNOMED CT concept that would act as object of the relationship.
+
+        Returns:
+            True if the concept is in the valid range. Otherwise returns False.
+        """
+        # Obtain the valid ranges
+        valid_ranges = self.get_ranges(subject_id, rel_id)
+
+        # Obtain the top ranges of the concept
+        top_ranges = self.snomed.get_top_concept_list(concept_id, self.possible_ranges)
+
+        # If any of the top ranges is in valid ranges, then return True. Returns False otherwise
+        return any(range_id in valid_ranges for range_id in top_ranges)
