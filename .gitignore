@@ -13,3 +13,6 @@ config.cfg
 /datasets/datasets*
 /models
 *__pycache__*
+/planetoid_cora
+/testing_gnn
+index.py
