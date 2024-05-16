@@ -2,11 +2,26 @@ import os
 import warnings
 
 import numpy as np
+import re
 import torch
 from torch_geometric.data import HeteroData, Dataset
 
 from python_libraries.embedding_models.embedding_model import EmbeddingModel
 from python_libraries.snomed import Snomed
+
+def preprocess_fsn(fsn : str):
+    """Method to preprocess the FSN of SNOMED CT so that they comply with the naming restrictions
+    of PyTorch Geometric.
+
+    Parameters:
+        fsn (str):
+            Fully Specified Name of the SNOMED CT Concept.
+    
+    Returns:
+        A string that represents the postprocessed FSN.    
+    """
+    fsn_aux = re.sub('[ /-]', '_', fsn)
+    return re.sub('_+', '_', fsn_aux)
 
 class SnomedData(Dataset):
     """Class that representents a Heterogeneous Graph derived from SNOMED CT so that it can be used for GNN tasks.
@@ -23,6 +38,8 @@ class SnomedData(Dataset):
         data (HeteroData):
             HeteroData that contains the information of the knowledge graph.
 
+        mappings (dict[str][int][int]):
+            Dictionary that allows the transformation from a SNOMED CT int to its corresponding index position.
     """
     def __init__(self, root : str, snomed : Snomed, embedding_model : EmbeddingModel = None,
                  class_as_semantic_tag : bool = False):
@@ -116,7 +133,7 @@ class SnomedData(Dataset):
         the information about each concept's feature vector, and another one containing the edge indexes.
         
         Returns:
-            Two dictionaries. The first one has classes as keys and contains the feature vectors to be store in the HeteroData.
+            Two dictionaries. The first one has classes as keys and contains the feature vectors to be stored in the HeteroData.
             The second one contains the information about edges and is a three level dictionary: domain_class, relation, range_class,
             and the values are lists of tuples [subject_index, object_index].
         """
@@ -133,10 +150,13 @@ class SnomedData(Dataset):
         for concept_id in self.snomed.get_sct_concepts():
             # Obtain the class ID and FSN the concept id belongs to
             if self._class_as_semantic_tag:
-                subject_hierarchy_fsn = self.snomed.get_semantic_tag(concept_id)
+                subject_hierarchy_fsn = self.snomed.get_semantic_type(concept_id)
             else:
                 subject_hierarchy_id = self.snomed.get_top_level_concept(concept_id) 
                 subject_hierarchy_fsn = self.snomed.get_fsn(subject_hierarchy_id)
+
+            # Remove spaces and /
+            subject_hierarchy_fsn = preprocess_fsn(subject_hierarchy_fsn)
 
             # We generate the feature vector for the given concept
             subject_feature_vector = self.__get_feature_vector(concept_id)
@@ -160,22 +180,30 @@ class SnomedData(Dataset):
         for concept_id in self.snomed.get_sct_concepts():
             # Obtain the FSN of the subject concept's class
             if self._class_as_semantic_tag:
-                subject_hierarchy_fsn = self.snomed.get_semantic_tag(concept_id)
+                subject_hierarchy_fsn = self.snomed.get_semantic_type(concept_id)
             else:
                 subject_hierarchy_id = self.snomed.get_top_level_concept(concept_id) 
                 subject_hierarchy_fsn = self.snomed.get_fsn(subject_hierarchy_id)
+
+            subject_hierarchy_fsn = preprocess_fsn(subject_hierarchy_fsn)
 
             # Iterate through the concept's relationships
             for rel_id, object_id in self.snomed.get_related_concepts(concept_id):
                 # Obtain the FSN of the object concept's class
                 if self._class_as_semantic_tag:
-                    object_hierarchy_fsn = self.snomed.get_semantic_tag(object_id)
+                    object_hierarchy_fsn = self.snomed.get_semantic_type(object_id)
                 else:
                     object_hierarchy_id = self.snomed.get_top_level_concept(object_id) 
                     object_hierarchy_fsn = self.snomed.get_fsn(object_hierarchy_id)
 
+                # Remove spaces and /
+                object_hierarchy_fsn = preprocess_fsn(object_hierarchy_fsn)
+
                 # Obtain the FSN of the relation
                 rel_fsn = self.snomed.get_fsn(rel_id)
+
+                # Remove spaces and /
+                rel_fsn = preprocess_fsn(rel_fsn)
 
                 # Obtain the index of the subject and object concept
                 subject_index = mappings[subject_hierarchy_fsn][concept_id]
@@ -192,6 +220,9 @@ class SnomedData(Dataset):
                         concepts_relations_edges[subject_hierarchy_fsn][rel_fsn] = {object_hierarchy_fsn : [[subject_index, object_index]]}
                 else:
                     concepts_relations_edges[subject_hierarchy_fsn] = {rel_fsn : { object_hierarchy_fsn : [[subject_index, object_index]]}}
+
+        # Store the mappings
+        self.mappings = mappings
 
         return concepts_feature_vectors, concepts_relations_edges
 
