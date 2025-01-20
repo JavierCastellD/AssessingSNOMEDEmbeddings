@@ -3,6 +3,8 @@ from python_libraries.snomed import Snomed
 import pandas as pd 
 import random
 
+N_NEGATIVES = 1
+
 IS_A_ID = 116680003
 
 train_concepts = []
@@ -81,24 +83,25 @@ for concept in concept_list:
                 relation_fsns.append(rel_fsn)
                 object_fsns.append(object_fsn)
 
-                # Add a negative example
-                index = random.randint(0, len(concepts_per_sem_type[obj_sem_type]) - 1)
-                
-                while (concepts_per_sem_type[obj_sem_type][index] in concepts_related_by_rel):
+                # Add negative examples
+                for i in range(N_NEGATIVES):
                     index = random.randint(0, len(concepts_per_sem_type[obj_sem_type]) - 1)
+                    
+                    while (concepts_per_sem_type[obj_sem_type][index] in concepts_related_by_rel):
+                        index = random.randint(0, len(concepts_per_sem_type[obj_sem_type]) - 1)
 
-                subject_concepts.append(concept)
-                relation_ids.append(rel_id)
-                object_concepts.append(concepts_per_sem_type[obj_sem_type][index])
+                    subject_concepts.append(concept)
+                    relation_ids.append(rel_id)
+                    object_concepts.append(concepts_per_sem_type[obj_sem_type][index])
 
-                triple_status.append('NO')
+                    triple_status.append('NO')
 
-                object_fsn = snomed.get_fsn(concepts_per_sem_type[obj_sem_type][index])
+                    object_fsn = snomed.get_fsn(concepts_per_sem_type[obj_sem_type][index])
 
-                # Append FSNs
-                subject_fsns.append(subject_fsn)
-                relation_fsns.append(rel_fsn)
-                object_fsns.append(object_fsn)
+                    # Append FSNs
+                    subject_fsns.append(subject_fsn)
+                    relation_fsns.append(rel_fsn)
+                    object_fsns.append(object_fsn)
 
 
 df = pd.DataFrame({'subject_id' : subject_concepts,
