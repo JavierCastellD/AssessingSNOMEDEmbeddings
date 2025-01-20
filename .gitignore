@@ -22,3 +22,4 @@ classification_tasks.py
 kg_walks.py
 /images
 read_file.py
+*.xlsx
