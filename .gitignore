@@ -16,3 +16,9 @@ config.cfg
 /planetoid_cora
 /testing_gnn
 index.py
+/concepts_dictionaries
+classification_tasks.py
+/prediction_results
+kg_walks.py
+/images
+read_file.py
