@@ -1,6 +1,40 @@
 from abc import ABC, abstractmethod
 import warnings
 
+import numpy as np
+
+def save_embeddings(embedding_dictionary : dict[str|int, list|np.ndarray], filename : str):
+    '''Function to save a embedding dictionary into a compressed numpy format (npz).
+    
+    Parameters:
+        embedding_dictionary (dict):
+            Dictionary that has IDs as keys and embeddings as values.
+        
+        filename (str):
+            Name of the filename saved.
+    '''
+    ids = np.array(list(embedding_dictionary.keys()))
+    vectors = np.array(list(embedding_dictionary.values()), dtype=np.float32)
+    np.savez_compressed(filename, ids=ids, vectors=vectors)
+
+def load_embeddings(filename : str) -> dict[str|int, list|np.ndarray]:
+    '''Function to load the embedding dictionary.
+    
+    Parameters:
+        filename (str):
+            Name of the filename that contains the dictionary.
+        
+        keys_as_ints (bool):
+            Whether to 
+    Returns:
+        A python dictionary that links ID to embeddings.
+    '''
+    data = np.load(filename, allow_pickle=True)
+    ids, vectors = data["ids"], data["vectors"]
+    embedding_dictionary = {id_: vec for id_, vec in zip(ids, vectors)}
+    
+    return embedding_dictionary 
+
 class EmbeddingModel(ABC):
     '''Abstract class that represents an embedding model, such as BERT, FastText, etc. 
     The methods to be implemented are train_model, save_model, load_model and get_embedding.

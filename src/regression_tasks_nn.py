@@ -1,10 +1,10 @@
-import json
 import os
 import os.path
 
 import numpy as np
 import pandas as pd
 
+from python_libraries.embedding_models.embedding_model import load_embeddings
 from python_libraries.embedding_models.fasttext_EM import FastTextEM
 from python_libraries.embedding_models.sentencetransformer_EM import SentenceTransformerEM
 from python_libraries.nn_embedding_predictor import EmbeddingPredictor
@@ -26,14 +26,30 @@ DESCRIPTIONS_PATH = "snomed_data/descriptionInternational_20240101.txt"
 snomed = Snomed(CONCEPTS_PATH, RELATIONS_PATH, DESCRIPTIONS_PATH)
 
 # Load the model
+model_log_name = 'results/MIMIC_10_Task_'
 embedding_model = FastTextEM(model_path="models/ft_train_MIMIC_10.model")
 
 # Load the dictionary if we are using SBERT
 concept_dictionary = None
 if isinstance(embedding_model, SentenceTransformerEM):
-    dict_test = open('concepts_dictionaries/full_train_mini_lm_3_1_sct_dict.json')
-    concept_dictionary = json.load(dict_test)
-    dict_test.close()
+    concept_dictionary = load_embeddings('concepts_dictionaries/full_train_mini_lm_3_1_sct_dict.npz')
+
+# Relation cache to speed up relation embedding inference
+relation_cache = {}
+
+# Define the neural network hyperparameters
+batch_size = 1024 # 524
+epochs = 50
+dense_layers = [2000, 2000, 2000, 2000] # [300, 200, 100]
+activation_function = 'relu'
+kernel_initializer = 'glorot_uniform'
+dropout_layers = None
+batch_normalization = None
+regularization_type = None
+l1_regularization = 0.01
+l2_regularization = 0.01
+optimizer_function = 'adamax' # adam
+learning_rate = 0.001
 
 # Load the dataset
 if relation_prediction:
@@ -71,9 +87,17 @@ if relation_prediction:
 
         X_train.append(np.concatenate([subject_embedding, object_embedding]))
         
-        relation_name = snomed.get_fsn(relation_id)
-        relation_embedding = embedding_model.get_embedding(relation_name)
-        # relation_embedding = embedding_model.get_embedding(str(relation_id))
+        if relation_id not in relation_cache:
+            relation_name = snomed.get_fsn(relation_id)
+            if isinstance(embedding_model, FastTextEM):
+                relation_embedding = embedding_model.get_embedding(str(relation_id))
+            else:
+                relation_embedding = embedding_model.get_embedding(relation_name)
+            
+            relation_cache[relation_id] = relation_embedding
+        
+        relation_embedding = relation_cache[relation_id]
+        
         y_train.append(relation_embedding)
         y_train_ids.append(relation_id)
     
@@ -90,9 +114,17 @@ if relation_prediction:
 
         X_test.append(np.concatenate([subject_embedding, object_embedding]))
 
-        relation_name = snomed.get_fsn(relation_id)
-        relation_embedding = embedding_model.get_embedding(relation_name)
-        # relation_embedding = embedding_model.get_embedding(str(relation_id))
+        if relation_id not in relation_cache:
+            relation_name = snomed.get_fsn(relation_id)
+            if isinstance(embedding_model, FastTextEM):
+                relation_embedding = embedding_model.get_embedding(str(relation_id))
+            else:
+                relation_embedding = embedding_model.get_embedding(relation_name)
+            
+            relation_cache[relation_id] = relation_embedding
+        
+        relation_embedding = relation_cache[relation_id]
+
         y_test.append(relation_embedding)
         y_test_ids.append(relation_id)
 else:
@@ -108,9 +140,16 @@ else:
             object_descriptions = snomed.get_descriptions(object_id)
             object_embedding = embedding_model.get_embedding_from_list(object_descriptions)
 
-        relation_name = snomed.get_fsn(relation_id)
-        relation_embedding = embedding_model.get_embedding(relation_name)
-        # relation_embedding = embedding_model.get_embedding(str(relation_id))
+        if relation_id not in relation_cache:
+            relation_name = snomed.get_fsn(relation_id)
+            if isinstance(embedding_model, FastTextEM):
+                relation_embedding = embedding_model.get_embedding(str(relation_id))
+            else:
+                relation_embedding = embedding_model.get_embedding(relation_name)
+            
+            relation_cache[relation_id] = relation_embedding
+        
+        relation_embedding = relation_cache[relation_id]
 
         X_train.append(np.concatenate([subject_embedding, relation_embedding]))
         y_train.append(object_embedding)
@@ -127,28 +166,42 @@ else:
             object_descriptions = snomed.get_descriptions(object_id)
             object_embedding = embedding_model.get_embedding_from_list(object_descriptions)
 
-        relation_name = snomed.get_fsn(relation_id)
-        relation_embedding = embedding_model.get_embedding(relation_name)
-        # relation_embedding = embedding_model.get_embedding(str(relation_id))
+        if relation_id not in relation_cache:
+            relation_name = snomed.get_fsn(relation_id)
+            if isinstance(embedding_model, FastTextEM):
+                relation_embedding = embedding_model.get_embedding(str(relation_id))
+            else:
+                relation_embedding = embedding_model.get_embedding(relation_name)
+            
+            relation_cache[relation_id] = relation_embedding
+        
+        relation_embedding = relation_cache[relation_id]
 
         X_test.append(np.concatenate([subject_embedding, relation_embedding]))
         y_test.append(object_embedding)
         y_test_ids.append(object_id)
 
 # Transform it into numpy array
-X_train = np.array(X_train)
-X_test = np.array(X_test)
+X_train = np.array(X_train, dtype=np.float32)
+X_test = np.array(X_test, dtype=np.float32)
 
-y_train = np.array(y_train)
-y_test = np.array(y_test)
+y_train = np.array(y_train, dtype=np.float32)
+y_test = np.array(y_test, dtype=np.float32)
 
 # Obtain the target space
 target_space = {}
 
 if relation_prediction:
     for target_id, target_name in zip(dataset_train['relation_id'].unique(), dataset_train['relation_fsn'].unique()):
-        target_space[target_id] = embedding_model.get_embedding(target_name)
-        #target_space[target_id] = embedding_model.get_embedding(str(target_id))
+        if target_id not in relation_cache:
+            if isinstance(embedding_model, FastTextEM):
+                target_embedding = embedding_model.get_embedding(str(target_id))
+            else:
+                target_embedding = embedding_model.get_embedding(target_name)
+            
+            relation_cache[target_id] = target_embedding
+
+        target_space[target_id] = relation_cache[target_id]
 else:
     for concept_id in snomed.get_sct_concepts(metadata=False):
         if concept_dictionary is not None:
@@ -159,22 +212,9 @@ else:
 
         target_space[concept_id] = target_embedding
 
-# Define the neural network hyperparameters
-batch_size = 512
-epochs = 50
-dense_layers = [300, 200, 100]
-activation_function = 'relu'
-kernel_initializer = 'glorot_uniform'
-dropout_layers = None
-batch_normalization = None
-regularization_type = None
-l1_regularization = 0.01
-l2_regularization = 0.01
-optimizer_function = 'adam'
-learning_rate = 0.001
 embedding_size = len(list(target_space.values())[0])
 
-log_output_file_name = 'results_initial/MIMIC_10_Task_' + task + '_nn_results.csv'
+log_output_file_name = model_log_name + task + '_nn_results.csv'
 
 # We will only need to write the header if the file did not exist
 header_needed = not os.path.isfile(log_output_file_name)

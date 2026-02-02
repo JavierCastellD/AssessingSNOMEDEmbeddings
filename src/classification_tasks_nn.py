@@ -1,14 +1,15 @@
-import json
 import os.path
+import warnings
 
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
 
-from python_libraries.snomed import Snomed
+from python_libraries.embedding_models.embedding_model import load_embeddings
 from python_libraries.embedding_models.fasttext_EM import FastTextEM
 from python_libraries.embedding_models.sentencetransformer_EM import SentenceTransformerEM
 from python_libraries.nn_embedding_classifier import EmbeddingClassifier
+from python_libraries.snomed import Snomed
 
 # The current tasks that we are considering that require using classification are:
 # 1. Is son of, i.e., given two concepts, whether the first one is a direct son of the second one
@@ -27,13 +28,32 @@ DESCRIPTIONS_PATH = "snomed_data/descriptionInternational_20240101.txt"
 snomed = Snomed(CONCEPTS_PATH, RELATIONS_PATH, DESCRIPTIONS_PATH)
 
 # Load the embedding model
+model_log_name = 'results/MIMIC_10_Task_'
 embedding_model = FastTextEM(model_path="models/ft_train_MIMIC_10.model")
 
+# Load the dictionary if we are using SBERT
 concept_dictionary = None
 if isinstance(embedding_model, SentenceTransformerEM):
-    dict_test = open('concepts_dictionaries/full_train_mini_lm_3_1_sct_dict.json')
-    concept_dictionary = json.load(dict_test)
-    dict_test.close()
+    concept_dictionary = load_embeddings('concepts_dictionaries/full_train_mini_lm_3_1_sct_dict.npz')
+
+# For LLM2vec, the metadata dictionary should be loaded
+
+# Relation cache to speed up relation embedding inference
+relation_cache = {}
+
+# Define the neural network hyperparameters
+batch_size = 1024 # 524
+epochs = 50
+dense_layers = [2000, 2000, 2000, 2000] # [300, 200, 100]
+activation_function = 'relu'
+kernel_initializer = 'glorot_uniform'
+dropout_layers = None
+batch_normalization = None
+regularization_type = None
+l1_regularization = 0.01
+l2_regularization = 0.01
+optimizer_function = 'adamax' # adam
+learning_rate = 0.001
 
 # Load the dataset
 if task == 1: # is son of
@@ -41,7 +61,6 @@ if task == 1: # is son of
     dataset_train_2 = pd.read_csv('datasets/datasets_is_son_of/dataset_is_son_of_v2_dev.csv')
     dataset_train = pd.concat([dataset_train, dataset_train_2])
     dataset_dev = pd.read_csv('datasets/datasets_is_son_of/dataset_is_son_of_v2_test.csv')
-    
 
     target_column = 'is_son_of'
     n_embeddings = 2
@@ -135,64 +154,66 @@ elif task == 3 or task == 4:
 elif task == 5:
     for subject_id, relation_id, object_id in zip(dataset_train['subject_id'], dataset_train['relation_id'], dataset_train['object_id']):
         if concept_dictionary is not None:
-            relation_name = snomed.get_fsn(relation_id)
-        
             subject_emb = np.array(concept_dictionary[str(subject_id)])
             object_emb = np.array(concept_dictionary[str(object_id)])
+
+            relation_name = snomed.get_fsn(relation_id)
             relation_emb = embedding_model.get_embedding(relation_name)
         else:
             subject_names = snomed.get_descriptions(subject_id)
             object_names = snomed.get_descriptions(object_id)
-            relation_name = snomed.get_fsn(relation_id)
     
             subject_emb = embedding_model.get_embedding_from_list(subject_names)
             object_emb = embedding_model.get_embedding_from_list(object_names)
-            relation_emb = embedding_model.get_embedding(relation_name)
-            # relation_emb = embedding_model.get_embedding(str(relation_id))
+        
+        if relation_id not in relation_cache:
+            relation_name = snomed.get_fsn(relation_id)
+            if isinstance(embedding_model, FastTextEM):
+                relation_emb = embedding_model.get_embedding(str(relation_id))
+            else:
+                relation_emb = embedding_model.get_embedding(relation_name)
+            
+            relation_cache[relation_id] = relation_emb
+        
+        relation_emb = relation_cache[relation_id]
 
         X_train.append(np.concatenate([subject_emb, relation_emb, object_emb]))
     
     for subject_id, relation_id, object_id in zip(dataset_dev['subject_id'], dataset_dev['relation_id'], dataset_dev['object_id']):
         if concept_dictionary is not None:
-            relation_name = snomed.get_fsn(relation_id)
-        
             subject_emb = np.array(concept_dictionary[str(subject_id)])
             object_emb = np.array(concept_dictionary[str(object_id)])
+
+            relation_name = snomed.get_fsn(relation_id)
             relation_emb = embedding_model.get_embedding(relation_name)
         else:
             subject_names = snomed.get_descriptions(subject_id)
             object_names = snomed.get_descriptions(object_id)
-            relation_name = snomed.get_fsn(relation_id)
     
             subject_emb = embedding_model.get_embedding_from_list(subject_names)
             object_emb = embedding_model.get_embedding_from_list(object_names)
-            relation_emb = embedding_model.get_embedding(relation_name)
-            # relation_emb = embedding_model.get_embedding(str(relation_id))
+        
+        if relation_id not in relation_cache:
+            relation_name = snomed.get_fsn(relation_id)
+            if isinstance(embedding_model, FastTextEM):
+                relation_emb = embedding_model.get_embedding(str(relation_id))
+            else:
+                relation_emb = embedding_model.get_embedding(relation_name)
+            
+            relation_cache[relation_id] = relation_emb
+        
+        relation_emb = relation_cache[relation_id]
 
         X_test.append(np.concatenate([subject_emb, relation_emb, object_emb]))
 
 # Transform it into numpy array
-X_train = np.array(X_train)
-X_test = np.array(X_test)
-
-# Define the neural network hyperparameters
-batch_size = 512
-epochs = 50
-dense_layers = [300, 200, 100]
-activation_function = 'relu'
-kernel_initializer = 'glorot_uniform'
-dropout_layers = None
-batch_normalization = None
-regularization_type = None
-l1_regularization = 0.01
-l2_regularization = 0.01
-optimizer_function = 'adam'
-learning_rate = 0.001
+X_train = np.array(X_train, dtype=np.float32)
+X_test = np.array(X_test, dtype=np.float32)
 
 embedding_size = X_train.shape[1]/n_embeddings
 number_of_classes = y_train.shape[1]
 
-log_output_file_name = 'results_initial/MIMIC_10_Task_' + target_column + '_nn_results.csv'
+log_output_file_name = model_log_name + target_column + '_nn_results.csv'
 
 # We will only need to write the header if the file did not exist
 header_needed = not os.path.isfile(log_output_file_name)
