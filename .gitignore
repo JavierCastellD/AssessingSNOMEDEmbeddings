@@ -24,3 +24,5 @@ kg_walks.py
 read_file.py
 *.xlsx
 /old_scripts
+*claude*
+/old_splits
