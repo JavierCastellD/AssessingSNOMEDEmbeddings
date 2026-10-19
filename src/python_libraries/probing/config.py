@@ -89,8 +89,8 @@ ENCODERS = {
     },
     'gnn_walks' : {
         'log_name' : 'GNN_walks',
-        'concepts' : (('dictionary', DICTIONARIES_PATH + 'train_gnn_walks_10_ep_no_test_edges_sct_dict.npz'), 'id'),
-        'relations' : (WALKS_MODEL, 'id')
+        'concepts' : (('dictionary', DICTIONARIES_PATH + 'train_gnn_mul_walks_10_ep_no_test_edges_sct_dict.npz'), 'id'),
+        'relations' : (WALKS_MODEL, 'fsn')
     },
 
     # LLM2Vec
