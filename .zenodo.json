@@ -1,0 +1,63 @@
+{
+    "title": "Probing Embedding Methods for Structural and Semantic Knowledge in SNOMED CT: source code",
+    "upload_type": "software",
+    "description": "<p>Source code of the article <em>Probing Embedding Methods for Structural and Semantic Knowledge in SNOMED CT</em>. It includes the scripts to generate the embeddings of SNOMED CT concepts with each encoder (FastText on clinical notes and on SNOMED CT walks, a fine-tuned sentence transformer, a graph neural network, LLM2Vec, and the TransE and DistMult knowledge graph embeddings), the lists of SNOMED CT identifiers that define the training, development and test partitions, the scripts to generate the probing datasets, and the scripts to train and evaluate the probes.</p><p>The repository does not redistribute SNOMED CT content. Generating the datasets requires the SNOMED CT International Edition (release 20240101), whose use requires a license. The embeddings used in the article are available as separate Zenodo records.</p>",
+    "creators": [
+        {
+            "name": "Castell-Díaz, Javier",
+            "affiliation": "Universidad de Murcia",
+            "orcid": "0000-0001-6923-2174"
+        },
+        {
+            "name": "Kelleher, John D.",
+            "affiliation": "Trinity College Dublin",
+            "orcid": "0000-0001-6462-3248"
+        },
+        {
+            "name": "Fernández-Breis, Jesualdo Tomás",
+            "affiliation": "Universidad de Murcia",
+            "orcid": "0000-0002-7558-2880"
+        },
+        {
+            "name": "Martínez-Costa, Catalina",
+            "affiliation": "Universidad de Murcia",
+            "orcid": "0000-0003-1857-1744"
+        }
+    ],
+    "license": "mit",
+    "keywords": [
+        "SNOMED CT",
+        "embeddings",
+        "probing",
+        "knowledge graphs",
+        "graph neural networks",
+        "sentence transformers",
+        "LLM2Vec"
+    ],
+    "related_identifiers": [
+        {
+            "identifier": "10.5281/zenodo.18220275",
+            "relation": "isSourceOf",
+            "scheme": "doi",
+            "resource_type": "dataset"
+        },
+        {
+            "identifier": "10.5281/zenodo.23478908",
+            "relation": "isSourceOf",
+            "scheme": "doi",
+            "resource_type": "dataset"
+        },
+        {
+            "identifier": "10.5281/zenodo.18455301",
+            "relation": "isSourceOf",
+            "scheme": "doi",
+            "resource_type": "dataset"
+        },
+        {
+            "identifier": "10.5281/zenodo.23478953",
+            "relation": "isSourceOf",
+            "scheme": "doi",
+            "resource_type": "dataset"
+        }
+    ]
+}

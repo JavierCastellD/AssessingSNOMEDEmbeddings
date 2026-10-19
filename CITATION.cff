@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the article in preferred-citation."
+title: "Probing Embedding Methods for Structural and Semantic Knowledge in SNOMED CT: source code"
+type: software
+authors:
+  - family-names: "Castell-Díaz"
+    given-names: "Javier"
+    affiliation: "Universidad de Murcia"
+    orcid: "https://orcid.org/0000-0001-6923-2174"
+  - family-names: "Kelleher"
+    given-names: "John D."
+    affiliation: "Trinity College Dublin"
+    orcid: "https://orcid.org/0000-0001-6462-3248"
+  - family-names: "Fernández-Breis"
+    given-names: "Jesualdo Tomás"
+    affiliation: "Universidad de Murcia"
+    orcid: "https://orcid.org/0000-0002-7558-2880"
+  - family-names: "Martínez-Costa"
+    given-names: "Catalina"
+    affiliation: "Universidad de Murcia"
+    orcid: "https://orcid.org/0000-0003-1857-1744"
+repository-code: "https://github.com/JavierCastellD/AssessingSNOMEDEmbeddings"
+license: MIT
+keywords:
+  - "SNOMED CT"
+  - "embeddings"
+  - "probing"
+  - "knowledge graphs"
+preferred-citation:
+  type: article
+  status: submitted
+  title: "Probing Embedding Methods for Structural and Semantic Knowledge in SNOMED CT"
+  authors:
+    - family-names: "Castell-Díaz"
+      given-names: "Javier"
+      orcid: "https://orcid.org/0000-0001-6923-2174"
+    - family-names: "Kelleher"
+      given-names: "John D."
+      orcid: "https://orcid.org/0000-0001-6462-3248"
+    - family-names: "Fernández-Breis"
+      given-names: "Jesualdo Tomás"
+      orcid: "https://orcid.org/0000-0002-7558-2880"
+    - family-names: "Martínez-Costa"
+      given-names: "Catalina"
+      orcid: "https://orcid.org/0000-0003-1857-1744"
