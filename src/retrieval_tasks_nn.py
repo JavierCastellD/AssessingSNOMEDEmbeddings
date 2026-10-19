@@ -133,8 +133,6 @@ for task_name in args.tasks:
         for concept_id in snomed.get_sct_concepts(metadata=False):
             target_space[concept_id] = get_embedding(approach_models, concept_id, snomed)
 
-    embedding_size = len(list(target_space.values())[0])
-
     log_output_file_name = model_log_name + task['log_name'] + '_nn_results.csv'
 
     for iteration in range(args.iterations):
@@ -152,7 +150,7 @@ for task_name in args.tasks:
                                     probe['activation_function'], probe['kernel_initializer'], probe['batch_normalization'],
                                     probe['regularization_type'], probe['l1_regularization'], probe['l2_regularization'],
                                     probe['optimizer_function'], probe['learning_rate'],
-                                    relation_prediction=relation_prediction, embedding_size=embedding_size)
+                                    relation_prediction=relation_prediction)
 
             # Train the model
             history = nn.train_model(X_train, y_train, X_test, y_test, verbose=2)

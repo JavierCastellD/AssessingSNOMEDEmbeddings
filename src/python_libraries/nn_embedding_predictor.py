@@ -32,7 +32,7 @@ class EmbeddingPredictor:
                  kernel_initializer : str = 'glorot_uniform', batch_normalization : str = None,
                  regularization_type : str = None, l1_regularization : float = 0.01, l2_regularization : float = 0.01,
                  optimizer_function : str = 'adam', learning_rate : float = 0.001,
-                 embedding_size : int = 200, relation_prediction : bool = True, rules : dict = None):
+                 relation_prediction : bool = True, rules : dict = None):
         """
         Parameters:
             embedding_space (dict):
@@ -66,8 +66,6 @@ class EmbeddingPredictor:
                 adam, sgd, rmsprop, adadelta, adagrad, adamax, and nadam.
             learning_rate (float):
                 Float value between 0 and 1 that represents the learning rate for the optimizer.
-            embedding_size (int):
-                Number of dimensions of the embeddings.
             relation_prediction (bool):
                 Represents if the task of the Neural Network will be relation prediction (True) or analogy prediction (False).
             rules (dict):
@@ -88,7 +86,7 @@ class EmbeddingPredictor:
         self.relation_prediction = relation_prediction
 
         # Establish the size of the embeddings
-        self.embedding_size = embedding_size
+        self.embedding_size = next(iter(embedding_space.values())).shape[0]
 
         # Specify training hyperparameters of the NN
         if self.relation_prediction:
@@ -264,8 +262,9 @@ class EmbeddingPredictor:
         
         for i in range(len(index)):
             sim_concepts = index[i]
-            sim_zip = [self.index2sct[i_concept] for i_concept in sim_concepts]
-            
+            sim_value = sim_values[i]
+            sim_zip_aux = [self.index2sct[i_concept] for i_concept in sim_concepts]
+            sim_zip = [(sim_val, sim_con) for sim_val, sim_con in zip(sim_value, sim_zip_aux)]
             
             # We either return the top 10 values for metric purposes (to study top5, top10, etc.)
             # or we return only the most similar
