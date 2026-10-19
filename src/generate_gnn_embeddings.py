@@ -5,13 +5,23 @@ import torch
 from torch_geometric.nn import SAGEConv, to_hetero
 from tqdm import tqdm
 
+from python_libraries.embedding_models.embedding_model import EmbeddingModel, save_embeddings
 from python_libraries.embedding_models.sentencetransformer_EM import SentenceTransformerEM
 from python_libraries.snomed import Snomed, IS_A_ID
 from python_libraries.snomed_gnn_data import preprocess_fsn, SnomedData
+from python_libraries.embedding_models.fasttext_EM import FastTextEM
 
-DICTIONARY_PATH = 'train_gnn_sim_10_ep_sct_dict.json'
+DICTIONARY_PATH = 'train_gnn_mul_10_ep_no_test_edges_sct_dict.npz'
+GRAPH_ROOT = 'snomed_gnn_mul_no_test_edges/' 
+EXCLUDED_SUBJECTS_PATH = 'datasets/test_concepts.txt'
 EMBEDDING_MODEL_PATH = 'models/full_st_minilm_3_neg_1_ep_sct_train.model'
 EMBEDDING_SIZE = 384
+
+#DICTIONARY_PATH = 'train_gnn_mul_walks_10_ep_no_test_edges_sct_dict.npz'
+#GRAPH_ROOT = 'snomed_gnn_walks_no_test_edges/'
+#EMBEDDING_MODEL_PATH = 'models/ft_train_dev_20240101_1_1.model'
+#EXCLUDED_SUBJECTS_PATH = 'datasets/test_concepts.txt'
+#EMBEDDING_SIZE = 200
 
 N_NEGATIVE_SAMPLES = 3
 SIM_VALUE_IS_A = 0.75
@@ -147,15 +157,24 @@ snomed = Snomed(con_path, rel_path, desc_path)
 
 # Load the model
 embedding_model = SentenceTransformerEM(model_path=EMBEDDING_MODEL_PATH)
+#embedding_model = FastTextEM(model_path=EMBEDDING_MODEL_PATH)
 
 # Transform SNOMED CT into GNN data
-snomed_data = SnomedData('snomed_gnn/', snomed, embedding_model)
+# Outgoing relationships of test concepts are excluded from message passing, both during training
+# and when generating the final embeddings, to avoid leakage into the probing test sets
+excluded_subjects = set()
+with open(EXCLUDED_SUBJECTS_PATH, 'r') as file:
+    for line in file.readlines():
+        excluded_subjects.add(int(line))
+
+snomed_data = SnomedData(GRAPH_ROOT, snomed, embedding_model, excluded_subjects=excluded_subjects)
 
 data = snomed_data.data
 
 # Device to train the GNN
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print('Device:', device)
+data = data.to(device)
 
 # Create the model
 model = GNNModel(in_channels=EMBEDDING_SIZE, hidden_channels=HIDDEN_CHANNELS, out_channels=EMBEDDING_OUTPUT_SIZE).to(device)
@@ -185,8 +204,8 @@ for epoch in range(EPOCHS):
     # The positive pairs are always the same, but the negative ones change each iteration
     gnn_data, labels = generate_train_tuples(snomed, concepts_in_scope, snomed_data)
 
-    out = decode(z, gnn_data).view(-1)
-    loss = criterion(out, torch.tensor(labels))
+    out = decode(z, gnn_data, use_cosine_sim=False).view(-1)
+    loss = criterion(out, torch.tensor(labels, dtype=torch.float, device=device))
     loss.backward()
     optimizer.step()
 
@@ -210,6 +229,4 @@ for concept_id in tqdm(snomed.get_sct_concepts(metadata=False)):
     concept_dict[concept_id] = embeddings[top_level][index].tolist()
 
 # Save the dictionary
-dictionary_file = open(DICTIONARY_PATH, 'w')
-json.dump(concept_dict, dictionary_file, indent=4)
-dictionary_file.close()
+save_embeddings(embedding_dictionary={str(concept_id): embedding for concept_id, embedding in concept_dict.items()}, filename=DICTIONARY_PATH)

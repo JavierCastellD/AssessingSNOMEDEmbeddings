@@ -42,7 +42,7 @@ class SnomedData(Dataset):
             Dictionary that allows the transformation from a SNOMED CT int to its corresponding index position.
     """
     def __init__(self, root : str, snomed : Snomed, embedding_model : EmbeddingModel = None,
-                 class_as_semantic_tag : bool = False):
+                 class_as_semantic_tag : bool = False, excluded_subjects : set[int] = None):
         """
         Parameters:
             root (str):
@@ -55,6 +55,11 @@ class SnomedData(Dataset):
             class_as_semantic_tag (bool):
                 Whether to use semantic tags as classes for the concepts. If set to False, top level
                 concepts will be considered as classes.
+            excluded_subjects (set[int]):
+                SNOMED CT identifiers whose outgoing relationships are left out of the graph (e.g., the
+                test concepts of the probing tasks). The concepts are still added as nodes, with their
+                feature vectors, so that embeddings can be generated for them. If None, all relationships
+                are kept.
         """ 
         # Store the SNOMED CT information
         self.snomed = snomed
@@ -66,8 +71,12 @@ class SnomedData(Dataset):
         # Set if semantic tags or top level concepts will be used as "classes"
         self._class_as_semantic_tag = class_as_semantic_tag
 
+        # Concepts whose outgoing relationships are excluded from the graph. This must be set
+        # before calling the parent constructor, as process() is triggered from it
+        self._excluded_subjects = set(excluded_subjects) if excluded_subjects is not None else set()
+
         super(SnomedData, self).__init__(root, transform=None, pre_transform=None)
-        self.data = torch.load(self.processed_paths[0])
+        self.data = torch.load(self.processed_paths[0], weights_only=False)
 
     @property
     def raw_file_names(self):
@@ -79,6 +88,10 @@ class SnomedData(Dataset):
     @property
     def processed_file_names(self):
         """ If these files are found in raw_dir, processing is skipped"""
+        # Use a different file when relationships are excluded, so that a cached full graph
+        # is never loaded by mistake (and vice versa)
+        if self._excluded_subjects:
+            return 'snomed_data_excluded_subjects.pt'
         return 'snomed_data.pt'
 
 
@@ -186,6 +199,11 @@ class SnomedData(Dataset):
                 subject_hierarchy_fsn = self.snomed.get_fsn(subject_hierarchy_id)
 
             subject_hierarchy_fsn = preprocess_fsn(subject_hierarchy_fsn)
+
+            # Skip the outgoing relationships of excluded concepts (e.g., test concepts). The
+            # concept remains in the graph as a node, so it still receives an embedding
+            if concept_id in self._excluded_subjects:
+                continue
 
             # Iterate through the concept's relationships
             for rel_id, object_id in self.snomed.get_related_concepts(concept_id):
